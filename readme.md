@@ -1,12 +1,14 @@
 # NFC Joke Generator
 
-### Členovia : Pavol Lukáč, Peter Dobiáš, Jozef Košecky, Viktoriia Fedyniak
+STM s NFC chipom po priložení mobilného zariadenia odošle vtipný vtip do priloženého mobilu, každé priloženie odošle vždy iný vtip.
 
-1. najst VTIPNE! vtipy
-2. urobit zoznam
-3. funkcia na vyberanie vtipov zo zoznamu, bez toho aby sa opakovali, po "mininuti" vsetky vtipov, zamiesat poradie existujucich vtipov zo zoznamu, zamiesat poriadie vtipov , tak aby nesli v rovankom poradi ako pri prvom kole.
-4. spojazdnit NFC komunikaciu medzi stm a NFC modulom, resp. NFC modulom a zariadenim ktore budu prijmat vtipy
-5. prepojit funkciu na "generovanie vtipov" tak aby sa spravne odosielali do zariadeni ktore budu prijmat vtipy
+### Členovia : Pavol Lukáč, Peter Dobiáš, Jozef Košecký, Viktoriia Fedyniak
+
+1. nájsť VTIPNÉ! vtipy
+2. urobiť zoznam
+3. funkcia na vyberanie vtipov zo zoznamu, bez toho aby sa opakovali, po "mininutí" všetkých vtipov, zamiešať poradie existujúcich vtipov zo zoznamu, zamiešať poriadie vtipov , tak aby nešli v rovankom poradí ako pri prvom kole.
+4. spojazdniť NFC komunikáciu medzi stm a NFC modulom, resp. NFC modulom a zariadením, ktoré budu prijímať vtipy
+5. prepojiť funkciu na "generovanie vtipov" tak aby sa správne odosielali do zariadení, ktoré budu prijímať vtipy
 6. testovanie
 7. ???
 9. PROFIT
