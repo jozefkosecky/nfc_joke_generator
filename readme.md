@@ -1,4 +1,4 @@
-NFC Joke Generator
+# NFC Joke Generator
 
 1. najst VTIPNE! vtipy
 2. urobit zoznam
