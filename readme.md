@@ -13,4 +13,5 @@
 
 ### Rozdelenie práce?
 body 1,2,3 : Viktoria,Peter
+
 body 4,5,6 : Pavol,Jozef
