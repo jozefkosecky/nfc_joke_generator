@@ -12,8 +12,3 @@ STM s NFC chipom po priložení mobilného zariadenia odošle vtipný vtip do pr
 6. testovanie
 7. ???
 9. PROFIT
-
-### Rozdelenie práce?
-body 1,2,3 : Viktoria,Peter
-
-body 4,5,6 : Pavol,Jozef
