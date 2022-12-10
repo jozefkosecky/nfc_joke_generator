@@ -25,6 +25,8 @@
 	volatile uint8_t ubReceiveIndex = 0;
 /* USER CODE END 0 */
 
+I2C_HandleTypeDef hi2c1;
+
 /* I2C1 init function */
 void MX_I2C1_Init(void)
 {
@@ -33,125 +35,164 @@ void MX_I2C1_Init(void)
 
   /* USER CODE END I2C1_Init 0 */
 
-  LL_I2C_InitTypeDef I2C_InitStruct = {0};
-
-  LL_GPIO_InitTypeDef GPIO_InitStruct = {0};
-
-  LL_AHB1_GRP1_EnableClock(LL_AHB1_GRP1_PERIPH_GPIOB);
-  /**I2C1 GPIO Configuration
-  PB6   ------> I2C1_SCL
-  PB7   ------> I2C1_SDA
-  */
-  GPIO_InitStruct.Pin = LL_GPIO_PIN_6|LL_GPIO_PIN_7;
-  GPIO_InitStruct.Mode = LL_GPIO_MODE_ALTERNATE;
-  GPIO_InitStruct.Speed = LL_GPIO_SPEED_FREQ_HIGH;
-  GPIO_InitStruct.OutputType = LL_GPIO_OUTPUT_OPENDRAIN;
-  GPIO_InitStruct.Pull = LL_GPIO_PULL_NO;
-  GPIO_InitStruct.Alternate = LL_GPIO_AF_4;
-  LL_GPIO_Init(GPIOB, &GPIO_InitStruct);
-
-  /* Peripheral clock enable */
-  LL_APB1_GRP1_EnableClock(LL_APB1_GRP1_PERIPH_I2C1);
-
-  /* I2C1 interrupt Init */
-  NVIC_SetPriority(I2C1_EV_IRQn, NVIC_EncodePriority(NVIC_GetPriorityGrouping(),0, 0));
-  NVIC_EnableIRQ(I2C1_EV_IRQn);
-
   /* USER CODE BEGIN I2C1_Init 1 */
 
   /* USER CODE END I2C1_Init 1 */
+  hi2c1.Instance = I2C1;
+  hi2c1.Init.Timing = 0x2000090E;
+  hi2c1.Init.OwnAddress1 = 0;
+  hi2c1.Init.AddressingMode = I2C_ADDRESSINGMODE_7BIT;
+  hi2c1.Init.DualAddressMode = I2C_DUALADDRESS_DISABLE;
+  hi2c1.Init.OwnAddress2 = 0;
+  hi2c1.Init.OwnAddress2Masks = I2C_OA2_NOMASK;
+  hi2c1.Init.GeneralCallMode = I2C_GENERALCALL_DISABLE;
+  hi2c1.Init.NoStretchMode = I2C_NOSTRETCH_DISABLE;
+  if (HAL_I2C_Init(&hi2c1) != HAL_OK)
+  {
+    Error_Handler();
+  }
 
-  /** I2C Initialization
+  /** Configure Analogue filter
   */
-  LL_I2C_EnableAutoEndMode(I2C1);
-  LL_I2C_DisableOwnAddress2(I2C1);
-  LL_I2C_DisableGeneralCall(I2C1);
-  LL_I2C_EnableClockStretching(I2C1);
-  I2C_InitStruct.PeripheralMode = LL_I2C_MODE_I2C;
-  I2C_InitStruct.Timing = 0x2000090E;
-  I2C_InitStruct.AnalogFilter = LL_I2C_ANALOGFILTER_ENABLE;
-  I2C_InitStruct.DigitalFilter = 0;
-  I2C_InitStruct.OwnAddress1 = 0;
-  I2C_InitStruct.TypeAcknowledge = LL_I2C_ACK;
-  I2C_InitStruct.OwnAddrSize = LL_I2C_OWNADDRESS1_7BIT;
-  LL_I2C_Init(I2C1, &I2C_InitStruct);
-  LL_I2C_SetOwnAddress2(I2C1, 0, LL_I2C_OWNADDRESS2_NOMASK);
+  if (HAL_I2CEx_ConfigAnalogFilter(&hi2c1, I2C_ANALOGFILTER_ENABLE) != HAL_OK)
+  {
+    Error_Handler();
+  }
+
+  /** Configure Digital filter
+  */
+  if (HAL_I2CEx_ConfigDigitalFilter(&hi2c1, 0) != HAL_OK)
+  {
+    Error_Handler();
+  }
   /* USER CODE BEGIN I2C1_Init 2 */
-  LL_I2C_Enable(I2C1);
+
   /* USER CODE END I2C1_Init 2 */
 
 }
 
-void i2c_master_write(uint8_t data, uint8_t register_addr, uint8_t slave_addr, uint8_t read_flag)
+void HAL_I2C_MspInit(I2C_HandleTypeDef* i2cHandle)
 {
-	if(read_flag)
-	{
-		register_addr |= (1 << 7);
-	}
 
-	LL_I2C_HandleTransfer(I2C1, slave_addr, LL_I2C_ADDRSLAVE_7BIT, 2, LL_I2C_MODE_AUTOEND, LL_I2C_GENERATE_START_WRITE);
+  GPIO_InitTypeDef GPIO_InitStruct = {0};
+  if(i2cHandle->Instance==I2C1)
+  {
+  /* USER CODE BEGIN I2C1_MspInit 0 */
 
-	LL_I2C_TransmitData8(I2C1, register_addr);
+  /* USER CODE END I2C1_MspInit 0 */
 
-	while(!LL_I2C_IsActiveFlag_STOP(I2C1))
-	{
-		if(LL_I2C_IsActiveFlag_TXIS(I2C1))
-		{
-			LL_I2C_TransmitData8(I2C1, data);
-		}
-	}
-	LL_I2C_ClearFlag_STOP(I2C1);
+    __HAL_RCC_GPIOB_CLK_ENABLE();
+    /**I2C1 GPIO Configuration
+    PB6     ------> I2C1_SCL
+    PB7     ------> I2C1_SDA
+    */
+    GPIO_InitStruct.Pin = GPIO_PIN_6|GPIO_PIN_7;
+    GPIO_InitStruct.Mode = GPIO_MODE_AF_OD;
+    GPIO_InitStruct.Pull = GPIO_NOPULL;
+    GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_HIGH;
+    GPIO_InitStruct.Alternate = GPIO_AF4_I2C1;
+    HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
+
+    /* I2C1 clock enable */
+    __HAL_RCC_I2C1_CLK_ENABLE();
+
+    /* I2C1 interrupt Init */
+    HAL_NVIC_SetPriority(I2C1_EV_IRQn, 0, 0);
+    HAL_NVIC_EnableIRQ(I2C1_EV_IRQn);
+  /* USER CODE BEGIN I2C1_MspInit 1 */
+
+  /* USER CODE END I2C1_MspInit 1 */
+  }
 }
 
-uint8_t* i2c_master_read(uint8_t* buffer, uint8_t length, uint8_t register_addr, uint8_t slave_addr, uint8_t read_flag)
+void HAL_I2C_MspDeInit(I2C_HandleTypeDef* i2cHandle)
 {
-	aReceiveBuffer_read = buffer;
 
-	if(read_flag)
-	{
-		register_addr |= (1 << 7);
-	}
+  if(i2cHandle->Instance==I2C1)
+  {
+  /* USER CODE BEGIN I2C1_MspDeInit 0 */
 
-	end_of_read_flag = 0;
+  /* USER CODE END I2C1_MspDeInit 0 */
+    /* Peripheral clock disable */
+    __HAL_RCC_I2C1_CLK_DISABLE();
 
-	LL_I2C_EnableIT_RX(I2C1);
+    /**I2C1 GPIO Configuration
+    PB6     ------> I2C1_SCL
+    PB7     ------> I2C1_SDA
+    */
+    HAL_GPIO_DeInit(GPIOB, GPIO_PIN_6);
 
-	//poziadam slejva o citanie z jeho registra
-	LL_I2C_HandleTransfer(I2C1, slave_addr, LL_I2C_ADDRSLAVE_7BIT, 1, LL_I2C_MODE_AUTOEND, LL_I2C_GENERATE_START_WRITE);
+    HAL_GPIO_DeInit(GPIOB, GPIO_PIN_7);
 
-	while(!LL_I2C_IsActiveFlag_STOP(I2C1))
-	{
-		if(LL_I2C_IsActiveFlag_TXIS(I2C1))
-		{
-			LL_I2C_TransmitData8(I2C1, register_addr);
-		}
-	}
-	LL_I2C_ClearFlag_STOP(I2C1);
-	while(LL_I2C_IsActiveFlag_STOP(I2C1)){}
+    /* I2C1 interrupt Deinit */
+    HAL_NVIC_DisableIRQ(I2C1_EV_IRQn);
+  /* USER CODE BEGIN I2C1_MspDeInit 1 */
 
-	//citam register od slejva
-	LL_I2C_HandleTransfer(I2C1, slave_addr, LL_I2C_ADDRSLAVE_7BIT, length, LL_I2C_MODE_AUTOEND, LL_I2C_GENERATE_START_READ);
-
-	while(!LL_I2C_IsActiveFlag_STOP(I2C1)){};
-
-	//End of transfer
-	LL_I2C_ClearFlag_STOP(I2C1);
-	LL_I2C_DisableIT_RX(I2C1);
-	I2C1->ICR |= (1 << 4);
-	ubReceiveIndex = 0;
-	end_of_read_flag = 1;
-
-	return aReceiveBuffer_read;
+  /* USER CODE END I2C1_MspDeInit 1 */
+  }
 }
 
-void I2C1_EV_IRQHandler(void)
+
+
+/* USER CODE BEGIN 1 */
+uint16_t   NFC_IO_IsDeviceReady (uint8_t Addr, uint32_t Trials)
 {
-	/* Check RXNE flag value in ISR register */
-	if(LL_I2C_IsActiveFlag_RXNE(I2C1))
-	{
-		/* Call function Master Reception Callback */
-		aReceiveBuffer_read[ubReceiveIndex++] = LL_I2C_ReceiveData8(I2C1);
-		(ubReceiveIndex > 19) ? ubReceiveIndex = 0 : ubReceiveIndex;
-		end_of_read_flag = 0;
-	}
+    HAL_StatusTypeDef status;
+    uint32_t tickstart = 0;
+    uint32_t currenttick = 0;
+
+    /* Get tick */
+    tickstart = HAL_GetTick();
+
+    /* Wait until M24SR is ready or timeout occurs */
+    do
+    {
+        status = HAL_I2C_IsDeviceReady(&hi2c1, Addr, Trials, NFC_I2C_TIMEOUT_STD);
+        currenttick = HAL_GetTick();
+    } while( ( (currenttick - tickstart) < NFC_I2C_TIMEOUT_MAX) && (status != HAL_OK) );
+
+    if (status != HAL_OK)
+    {
+        return NFC_I2C_ERROR_TIMEOUT;
+    }
+
+    return NFC_I2C_STATUS_SUCCESS;
 }
+
+uint16_t NFC_IO_WriteMultiple (uint8_t Addr, uint8_t *pBuffer, uint16_t Length)
+{
+  uint16_t status ;
+  /* Before calling this function M24SR must be ready: check to detect potential issues */
+  status = NFC_IO_IsDeviceReady(Addr, NFC_I2C_TRIALS);
+  if (status != NFC_I2C_STATUS_SUCCESS)
+  {
+    return NFC_I2C_ERROR_TIMEOUT;
+  }
+
+  if( HAL_I2C_Master_Transmit(&hi2c1, Addr, (uint8_t*)pBuffer, Length,1000) != HAL_OK)
+  {
+    return NFC_I2C_ERROR_TIMEOUT;
+  }
+
+  return NFC_I2C_STATUS_SUCCESS;
+}
+
+uint16_t NFC_IO_ReadMultiple (uint8_t Addr, uint8_t *pBuffer, uint16_t Length )
+{
+  uint16_t status ;
+  uint8_t testBuffer[0xFF];
+  memset(testBuffer, 0, sizeof testBuffer);
+    /* Before calling this function M24SR must be ready: check to detect potential issues */
+  status = NFC_IO_IsDeviceReady(Addr, NFC_I2C_TRIALS);
+  if (status != NFC_I2C_STATUS_SUCCESS)
+  {
+    return NFC_I2C_ERROR_TIMEOUT;
+  }
+
+  if( HAL_I2C_Master_Receive(&hi2c1, Addr, (uint8_t*)pBuffer, Length,1000) != HAL_OK)
+  {
+    return NFC_I2C_ERROR_TIMEOUT;
+  }
+  return NFC_I2C_STATUS_SUCCESS;
+}
+/* USER CODE END 1 */

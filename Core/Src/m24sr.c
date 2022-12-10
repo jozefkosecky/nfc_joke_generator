@@ -22,6 +22,7 @@
 
 #include "m24sr.h"
 
+
 /** @addtogroup BSP
   * @{
   */
@@ -67,7 +68,7 @@ typedef struct
 typedef struct 
 {
   uint8_t LC;                  /* Data field length */  
-  uint8_t *pData ;             /* Command parameters */ 
+  //uint8_t *pData ;             /* Command parameters */
   uint8_t LE;                  /* Expected length of data to be returned */
 } C_APDU_Body;
 
@@ -265,11 +266,11 @@ volatile uint8_t    GPO_Low = 0;
 static uint16_t M24SR_UpdateCrc             ( uint8_t ch, uint16_t *lpwCrc);
 static uint16_t M24SR_ComputeCrc            ( uint8_t *Data, uint8_t Length);
 static uint16_t M24SR_IsCorrectCRC16Residue ( uint8_t *DataIn,uint8_t Length);
-static void M24SR_BuildIBlockCommand        ( uint16_t CommandStructure, C_APDU Command, uint16_t *NbByte , uint8_t *pCommand);
+static void M24SR_BuildIBlockCommand        ( uint16_t CommandStructure, C_APDU Command, uint8_t *pData, uint16_t *NbByte , uint8_t *pCommand);
 static uint16_t IsSBlock                    ( uint8_t *pBuffer);
 static uint16_t M24SR_FWTExtension          ( uint16_t DeviceAddr, uint8_t FWTbyte);
 static void     M24SR_SetI2CSynchroMode     ( uint8_t WaitingMode );
-static uint16_t M24SR_IsAnswerReady         ( uint16_t DeviceAddr);
+
 /**
   * @}
   */
@@ -360,7 +361,7 @@ static uint16_t M24SR_IsCorrectCRC16Residue (uint8_t *DataIn,uint8_t Length)
   * @param     NbByte : number of byte of the command
   * @param     pCommand : pointer of the command created
   */
-static void M24SR_BuildIBlockCommand ( uint16_t CommandStructure, C_APDU Command, uint16_t *NbByte , uint8_t *pCommand)
+static void M24SR_BuildIBlockCommand ( uint16_t CommandStructure, C_APDU Command, uint8_t *pData, uint16_t *NbByte , uint8_t *pCommand)
 {
   uint16_t  uCRC16; 
   static uint8_t BlockNumber = 0x01;
@@ -373,14 +374,14 @@ static void M24SR_BuildIBlockCommand ( uint16_t CommandStructure, C_APDU Command
     /* toggle the block number */
     BlockNumber = TOGGLE ( BlockNumber );
     /* Add the I block byte */
-    pCommand[(*NbByte)++] = 0x02 |  BlockNumber; 
+    pCommand[(*NbByte)++] = 0x02 |  BlockNumber;
   }
   
   /* add the DID byte */
   if ((BlockNumber & M24SR_DID_NEEDED) !=0)
   {
     /* Add the I block byte */
-    pCommand[(*NbByte)++] = uDIDbyte; 
+    pCommand[(*NbByte)++] = uDIDbyte;
   }
   
   /* add the Class byte */
@@ -411,8 +412,12 @@ static void M24SR_BuildIBlockCommand ( uint16_t CommandStructure, C_APDU Command
   /* add Data field  */
   if ((CommandStructure & M24SR_DATA_NEEDED) !=0)
   {
-    memcpy(&(pCommand[(*NbByte)]) ,Command.Body.pData,Command.Body.LC ) ;
-    (*NbByte) += Command.Body.LC ;
+    //memcpy(&(pCommand[(*NbByte)]) ,pData ,Command.Body.LC ) ;
+    //(*NbByte) += Command.Body.LC ;
+	  for (int i=0;i<Command.Body.LC;i++)
+	  {
+		  pCommand[(*NbByte)++] = pData[i];
+	  }
   }
   /* add Le field  */
   if ((CommandStructure & M24SR_LE_NEEDED) !=0)
@@ -425,11 +430,84 @@ static void M24SR_BuildIBlockCommand ( uint16_t CommandStructure, C_APDU Command
     uCRC16 = M24SR_ComputeCrc (pCommand,(uint8_t) (*NbByte));
     /* append the CRC16 */
     pCommand [(*NbByte)++] = GETLSB  (uCRC16 ) ;
-    pCommand [(*NbByte)++] = GETMSB  (uCRC16 ) ;  
+    pCommand [(*NbByte)++] = GETMSB  (uCRC16 ) ;
   } 
 }
 
+static void M24SR_BuildIBlockCommand2 ( uint16_t CommandStructure, C_APDU Command, uint16_t *NbByte , uint8_t *pCommand)
+{
+  uint16_t  uCRC16;
+  static uint8_t BlockNumber = 0x01;
+
+  (*NbByte) = 0;
+
+  /* add the PCD byte */
+  if ((CommandStructure & M24SR_PCB_NEEDED) !=0)
+  {
+    /* toggle the block number */
+    BlockNumber = TOGGLE ( BlockNumber );
+    /* Add the I block byte */
+    pCommand[(*NbByte)++] = 0x02 |  BlockNumber;
+  }
+
+  /* add the DID byte */
+  if ((BlockNumber & M24SR_DID_NEEDED) !=0)
+  {
+    /* Add the I block byte */
+    pCommand[(*NbByte)++] = uDIDbyte;
+  }
   
+  /* add the Class byte */
+  if ((CommandStructure & M24SR_CLA_NEEDED) !=0)
+  {
+    pCommand[(*NbByte)++] = Command.Header.CLA ;
+  }
+  /* add the instruction byte byte */
+  if ( (CommandStructure & M24SR_INS_NEEDED) !=0)
+  {
+    pCommand[(*NbByte)++] = Command.Header.INS ;
+  }
+  /* add the Selection Mode byte */
+  if ((CommandStructure & M24SR_P1_NEEDED) !=0)
+  {
+    pCommand[(*NbByte)++] = Command.Header.P1 ;
+  }
+  /* add the Selection Mode byte */
+  if ((CommandStructure & M24SR_P2_NEEDED) !=0)
+  {
+    pCommand[(*NbByte)++] = Command.Header.P2 ;
+  }
+  /* add Data field lengthbyte */
+  if ((CommandStructure & M24SR_LC_NEEDED) !=0)
+  {
+    pCommand[(*NbByte)++] = Command.Body.LC ;
+  }
+  /* add Data field  */
+  /*if ((CommandStructure & M24SR_DATA_NEEDED) !=0)
+  {
+    //memcpy(&(pCommand[(*NbByte)]) ,pData ,Command.Body.LC ) ;
+    //(*NbByte) += Command.Body.LC ;
+	  for (int i=0;i<Command.Body.LC;i++)
+	  {
+		  pCommand[(*NbByte)++] = pData[i];
+	  }
+  }*/
+  /* add Le field  */
+  if ((CommandStructure & M24SR_LE_NEEDED) !=0)
+  {
+    pCommand[(*NbByte)++] = Command.Body.LE ;
+  }
+  /* add CRC field  */
+  if ((CommandStructure & M24SR_CRC_NEEDED) !=0)
+  {
+    uCRC16 = M24SR_ComputeCrc (pCommand,(uint8_t) (*NbByte));
+    /* append the CRC16 */
+    pCommand [(*NbByte)++] = GETLSB  (uCRC16 ) ;
+    pCommand [(*NbByte)++] = GETMSB  (uCRC16 ) ;
+  }
+}
+
+
 /**  
 * @brief    This function return M24SR_STATUS_SUCCESS if the pBuffer is an s-block
 * @param    pBuffer    :  pointer of the data
@@ -479,7 +557,8 @@ static uint16_t M24SR_FWTExtension (uint16_t DeviceAddr, uint8_t FWTbyte)
   {
     return M24SR_ERROR_TIMEOUT;
   } 
-  status = M24SR_IsAnswerReady (DeviceAddr);
+  //M24SR_IsAnswerReady (DeviceAddr);
+  status = NFC_IO_IsDeviceReady (DeviceAddr, NFC_I2C_TRIALS  );
   if (status != M24SR_STATUS_SUCCESS)
   {
     return status;
@@ -532,7 +611,7 @@ void M24SR_Init(uint16_t DeviceAddr, uint8_t GpoMode)
   Command.Body.LC = 0x00 ;
   /* copy the number of byte to read */
   Command.Body.LE = 0x00 ;
-  Command.Body.pData = DataBuffer; 
+  //Command.Body.pData = DataBuffer;
   
   if((uGpoMode == M24SR_GPO_SYNCHRO) || (uGpoMode == M24SR_GPO_INTERRUPT))
   {
@@ -623,7 +702,8 @@ uint16_t M24SR_Deselect (uint16_t DeviceAddr)
   {
     return M24SR_ERROR_TIMEOUT;
   }    
-  status = M24SR_IsAnswerReady (DeviceAddr);
+  //status = M24SR_IsAnswerReady (DeviceAddr);
+  status = NFC_IO_IsDeviceReady (DeviceAddr, NFC_I2C_TRIALS  );
   if (status != M24SR_STATUS_SUCCESS)
   {
     return status;
@@ -664,18 +744,24 @@ uint16_t M24SR_SelectApplication (uint16_t DeviceAddr)
   /* copy the number of byte of the data field */
   Command.Body.LC = uLc ;
   /* copy the data */
-  memcpy(Command.Body.pData, pData, uLc);
+
+  //Command.Body.pData = pData;
+  //memcpy(Command.Body.pData, pData, uLc);
+
+
+
   /* copy the number of byte to read */
   Command.Body.LE = uLe ;
   /* build the I�C command */
-  M24SR_BuildIBlockCommand ( M24SR_CMDSTRUCT_SELECTAPPLICATION,  Command, &NbByte , pBuffer);
+  M24SR_BuildIBlockCommand ( M24SR_CMDSTRUCT_SELECTAPPLICATION, Command, pData,  &NbByte , pBuffer);
   
   /* send the request */ 
   if (NFC_IO_WriteMultiple(DeviceAddr, pBuffer, NbByte) != NFC_IO_STATUS_SUCCESS)
   {
     return M24SR_ERROR_TIMEOUT;
   } 
-  status = M24SR_IsAnswerReady (DeviceAddr);
+  //status = M24SR_IsAnswerReady (DeviceAddr);
+  status = NFC_IO_IsDeviceReady (DeviceAddr, NFC_I2C_TRIALS  );
   if (status != M24SR_STATUS_SUCCESS)
   {
     return status;
@@ -685,7 +771,7 @@ uint16_t M24SR_SelectApplication (uint16_t DeviceAddr)
   {
     return M24SR_ERROR_TIMEOUT;
   }   
-  status = M24SR_IsCorrectCRC16Residue (pBuffer,NbByteToRead); 
+  status = M24SR_IsCorrectCRC16Residue (pBuffer,NbByteToRead);
   return status;
 }
 
@@ -701,7 +787,7 @@ uint16_t M24SR_SelectCCfile (uint16_t DeviceAddr)
 {
   uint8_t   *pBuffer = uM24SRbuffer ,
   NbByteToRead = M24SR_STATUSRESPONSE_NBBYTE;
-  uint8_t    uLc = 0x02;
+  uint8_t    uLc = 0x02, pData[2];
   uint16_t  status ; 
   uint16_t  uP1P2 =0x000C,
   uNbFileId =CC_FILE_ID,
@@ -716,17 +802,18 @@ uint16_t M24SR_SelectCCfile (uint16_t DeviceAddr)
   /* copy the number of byte of the data field */
   Command.Body.LC = uLc ;
   /* copy the File Id */
-  Command.Body.pData[0] = GETMSB  (uNbFileId ) ;
-  Command.Body.pData[1] = GETLSB  (uNbFileId ) ;
+  pData[0] = GETMSB  (uNbFileId ) ;
+  pData[1] = GETLSB  (uNbFileId ) ;
   /* build the I�C command */
-  M24SR_BuildIBlockCommand ( M24SR_CMDSTRUCT_SELECTCCFILE,  Command, &NbByte , pBuffer);
+  M24SR_BuildIBlockCommand ( M24SR_CMDSTRUCT_SELECTCCFILE,  Command, pData, &NbByte , pBuffer);
   
   /* send the request */ 
   if (NFC_IO_WriteMultiple(DeviceAddr, pBuffer, NbByte) != NFC_IO_STATUS_SUCCESS)
   {
     return M24SR_ERROR_TIMEOUT;
   } 
-  status = M24SR_IsAnswerReady (DeviceAddr);
+  //status = M24SR_IsAnswerReady (DeviceAddr);
+  status = NFC_IO_IsDeviceReady (DeviceAddr, NFC_I2C_TRIALS  );
   if (status != M24SR_STATUS_SUCCESS)
   {
     return status;
@@ -752,7 +839,7 @@ uint16_t M24SR_SelectSystemfile (uint16_t DeviceAddr)
 {
   uint8_t   *pBuffer = uM24SRbuffer ,
   NbByteToRead = M24SR_STATUSRESPONSE_NBBYTE;
-  uint8_t    uLc = 0x02;
+  uint8_t    uLc = 0x02, pData[2];
   uint16_t  status ; 
   uint16_t  uP1P2 =0x000C,
   uNbFileId =SYSTEM_FILE_ID,
@@ -767,17 +854,18 @@ uint16_t M24SR_SelectSystemfile (uint16_t DeviceAddr)
   /* copy the number of byte of the data field */
   Command.Body.LC = uLc ;
   /* copy the File Id */
-  Command.Body.pData[0] = GETMSB  (uNbFileId ) ;
-  Command.Body.pData[1] = GETLSB  (uNbFileId ) ;
+  pData[0] = GETMSB  (uNbFileId ) ;
+  pData[1] = GETLSB  (uNbFileId ) ;
   /* build the I�C command */
-  M24SR_BuildIBlockCommand ( M24SR_CMDSTRUCT_SELECTCCFILE,  Command, &NbByte , pBuffer);
+  M24SR_BuildIBlockCommand ( M24SR_CMDSTRUCT_SELECTCCFILE,  Command, pData, &NbByte , pBuffer);
   
   /* send the request */ 
   if (NFC_IO_WriteMultiple(DeviceAddr, pBuffer, NbByte) != NFC_IO_STATUS_SUCCESS)
   {
     return M24SR_ERROR_TIMEOUT;
   } 
-  status = M24SR_IsAnswerReady (DeviceAddr);
+  //status );
+  status = NFC_IO_IsDeviceReady (DeviceAddr, NFC_I2C_TRIALS  );
   if (status != M24SR_STATUS_SUCCESS)
   {
     return status;
@@ -804,7 +892,7 @@ uint16_t M24SR_SelectNDEFfile (uint16_t DeviceAddr, uint16_t NDEFfileId)
 {
   uint8_t   *pBuffer = uM24SRbuffer ,
   NbByteToRead = M24SR_STATUSRESPONSE_NBBYTE;
-  uint8_t    uLc = 0x02;
+  uint8_t    uLc = 0x02, pData[2];
   uint16_t  status ; 
   uint16_t  uP1P2 =0x000C,
   NbByte;
@@ -818,17 +906,18 @@ uint16_t M24SR_SelectNDEFfile (uint16_t DeviceAddr, uint16_t NDEFfileId)
   /* copy the number of byte of the data field */
   Command.Body.LC = uLc ;
   /* copy the offset */
-  Command.Body.pData[0] = GETMSB  (NDEFfileId ) ;
-  Command.Body.pData[1] = GETLSB  (NDEFfileId ) ;
+  pData[0] = GETMSB  (NDEFfileId ) ;
+  pData[1] = GETLSB  (NDEFfileId ) ;
   /* build the I�C command */
-  M24SR_BuildIBlockCommand ( M24SR_CMDSTRUCT_SELECTNDEFFILE,  Command, &NbByte , pBuffer);
+  M24SR_BuildIBlockCommand ( M24SR_CMDSTRUCT_SELECTNDEFFILE,  Command, pData, &NbByte , pBuffer);
   
   /* send the request */ 
   if (NFC_IO_WriteMultiple(DeviceAddr, pBuffer, NbByte) != NFC_IO_STATUS_SUCCESS)
   {
     return M24SR_ERROR_TIMEOUT;
   } 
-  status = M24SR_IsAnswerReady (DeviceAddr);
+  //status = M24SR_IsAnswerReady (DeviceAddr);
+  status = NFC_IO_IsDeviceReady (DeviceAddr, NFC_I2C_TRIALS  );
   if (status != M24SR_STATUS_SUCCESS)
   {
     return status;
@@ -868,14 +957,15 @@ uint16_t M24SR_ReadBinary (uint16_t DeviceAddr, uint16_t Offset ,uint8_t NbByteT
   /* copy the number of byte to read */
   Command.Body.LE = NbByteToRead ;
   
-  M24SR_BuildIBlockCommand ( M24SR_CMDSTRUCT_READBINARY,  Command, &NbByte , pBuffer);
+  M24SR_BuildIBlockCommand2 ( M24SR_CMDSTRUCT_READBINARY,  Command, &NbByte , pBuffer);
   
   status = NFC_IO_WriteMultiple(DeviceAddr, pBuffer, NbByte);
   if (status != NFC_IO_STATUS_SUCCESS)
   {
     return M24SR_ERROR_TIMEOUT;
   } 
-  status = M24SR_IsAnswerReady (DeviceAddr);
+  //status = M24SR_IsAnswerReady (DeviceAddr);
+  status = NFC_IO_IsDeviceReady (DeviceAddr, NFC_I2C_TRIALS  );
   if (status != M24SR_STATUS_SUCCESS)
   {
     return status;
@@ -917,14 +1007,15 @@ uint16_t M24SR_STReadBinary (uint16_t DeviceAddr, uint16_t Offset, uint8_t NbByt
   /* copy the number of byte to read */
   Command.Body.LE = NbByteToRead ;
   
-  M24SR_BuildIBlockCommand ( M24SR_CMDSTRUCT_READBINARY,  Command, &NbByte , pBuffer);
+  M24SR_BuildIBlockCommand2 ( M24SR_CMDSTRUCT_READBINARY,  Command, &NbByte , pBuffer);
   
   status =  NFC_IO_WriteMultiple(DeviceAddr, pBuffer, NbByte);
   if (status != NFC_IO_STATUS_SUCCESS)
   {
     return M24SR_ERROR_TIMEOUT;
   } 
-  status = M24SR_IsAnswerReady (DeviceAddr);
+  //status = M24SR_IsAnswerReady (DeviceAddr);
+  status = NFC_IO_IsDeviceReady (DeviceAddr, NFC_I2C_TRIALS  );
   if (status != M24SR_STATUS_SUCCESS)
   {
     return status;
@@ -966,16 +1057,18 @@ uint16_t M24SR_UpdateBinary (uint16_t DeviceAddr, uint16_t Offset ,uint8_t NbByt
   /* copy the number of byte of the data field */
   Command.Body.LC = NbByteToWrite ;
   /* copy the File Id */
-  memcpy(Command.Body.pData ,pDataToWrite, NbByteToWrite );
+  //memcpy(Command.Body.pData ,pDataToWrite, NbByteToWrite );
   
-  M24SR_BuildIBlockCommand ( M24SR_CMDSTRUCT_UPDATEBINARY,  Command, &NbByte , pBuffer);
   
+  M24SR_BuildIBlockCommand ( M24SR_CMDSTRUCT_UPDATEBINARY,  Command, pDataToWrite, &NbByte , pBuffer);
+
   status = NFC_IO_WriteMultiple(DeviceAddr, pBuffer, NbByte);
   if (status != NFC_IO_STATUS_SUCCESS)
   {
     return M24SR_ERROR_TIMEOUT;
   } 
-  status = M24SR_IsAnswerReady (DeviceAddr);
+  //status = M24SR_IsAnswerReady (DeviceAddr);
+  status = NFC_IO_IsDeviceReady (DeviceAddr, NFC_I2C_TRIALS  );
   if (status != M24SR_STATUS_SUCCESS)
   {
     return status;
@@ -1041,14 +1134,14 @@ uint16_t M24SR_Verify (uint16_t DeviceAddr, uint16_t uPwdId, uint8_t NbPwdByte ,
   if (NbPwdByte == 0x10) 
   {
     /* copy the password */
-    memcpy(Command.Body.pData, pPwd, NbPwdByte);
+    //memcpy(Command.Body.pData, pPwd, NbPwdByte);
     /* build the I�C command */
-    M24SR_BuildIBlockCommand ( M24SR_CMDSTRUCT_VERIFYBINARYWITHPWD,  Command, &NbByte , pBuffer);
+    M24SR_BuildIBlockCommand ( M24SR_CMDSTRUCT_VERIFYBINARYWITHPWD,  Command, pPwd, &NbByte , pBuffer);
   }
   else 
   {
     /* build the I�C command */
-    M24SR_BuildIBlockCommand ( M24SR_CMDSTRUCT_VERIFYBINARYWOPWD,  Command, &NbByte , pBuffer);
+    M24SR_BuildIBlockCommand2 ( M24SR_CMDSTRUCT_VERIFYBINARYWOPWD,  Command, &NbByte , pBuffer);
   }
   
   /* send the request */ 
@@ -1058,7 +1151,8 @@ uint16_t M24SR_Verify (uint16_t DeviceAddr, uint16_t uPwdId, uint8_t NbPwdByte ,
     return M24SR_ERROR_TIMEOUT;
   } 
   /* wait for answer ready */
-  status = M24SR_IsAnswerReady (DeviceAddr);
+  //status = M24SR_IsAnswerReady (DeviceAddr);
+  status = NFC_IO_IsDeviceReady (DeviceAddr, NFC_I2C_TRIALS  );
   if (status != M24SR_STATUS_SUCCESS)
   {
     return status;
@@ -1104,9 +1198,9 @@ uint16_t M24SR_ChangeReferenceData (uint16_t DeviceAddr, uint16_t uPwdId, uint8_
   /* copy the number of byte of the data field */
   Command.Body.LC = M24SR_PASSWORD_NBBYTE ;
   /* copy the password */
-  memcpy(Command.Body.pData, pPwd, M24SR_PASSWORD_NBBYTE);
+  //memcpy(Command.Body.pData, pPwd, M24SR_PASSWORD_NBBYTE);
   /* build the I�C command */
-  M24SR_BuildIBlockCommand ( M24SR_CMDSTRUCT_CHANGEREFDATA,  Command, &NbByte , pBuffer);
+  M24SR_BuildIBlockCommand ( M24SR_CMDSTRUCT_CHANGEREFDATA,  Command, pPwd, &NbByte , pBuffer);
   
   
   /* send the request */ 
@@ -1115,7 +1209,8 @@ uint16_t M24SR_ChangeReferenceData (uint16_t DeviceAddr, uint16_t uPwdId, uint8_
   {
     return M24SR_ERROR_TIMEOUT;
   } 
-  status = M24SR_IsAnswerReady (DeviceAddr);
+  //status = M24SR_IsAnswerReady (DeviceAddr);
+  status = NFC_IO_IsDeviceReady (DeviceAddr, NFC_I2C_TRIALS  );
   if (status != M24SR_STATUS_SUCCESS)
   {
     return status;
@@ -1158,7 +1253,7 @@ uint16_t M24SR_EnableVerificationRequirement (uint16_t DeviceAddr, uint16_t uRea
   Command.Header.P1 = GETMSB  (uReadOrWrite ) ;
   Command.Header.P2 = GETLSB  (uReadOrWrite ) ;
   /* build the I�C command */
-  M24SR_BuildIBlockCommand ( M24SR_CMDSTRUCT_ENABLEVERIFREQ,  Command, &NbByte , pBuffer);
+  M24SR_BuildIBlockCommand2 ( M24SR_CMDSTRUCT_ENABLEVERIFREQ,  Command, &NbByte , pBuffer);
   
   /* send the request */ 
   status =  NFC_IO_WriteMultiple(DeviceAddr, pBuffer, NbByte);
@@ -1167,7 +1262,8 @@ uint16_t M24SR_EnableVerificationRequirement (uint16_t DeviceAddr, uint16_t uRea
     return M24SR_ERROR_TIMEOUT;
   } 
   /* The right access to be updated in EEPROM need at least 6ms */  
-  status = M24SR_IsAnswerReady (DeviceAddr);
+  //status = M24SR_IsAnswerReady (DeviceAddr);
+  status = NFC_IO_IsDeviceReady (DeviceAddr, NFC_I2C_TRIALS  );
   if (status != M24SR_STATUS_SUCCESS)
   {
     return status;
@@ -1210,7 +1306,7 @@ uint16_t M24SR_DisableVerificationRequirement (uint16_t DeviceAddr, uint16_t uRe
   Command.Header.P1 = GETMSB  (uReadOrWrite ) ;
   Command.Header.P2 = GETLSB  (uReadOrWrite ) ;
   /* build the I�C command */
-  M24SR_BuildIBlockCommand ( M24SR_CMDSTRUCT_DISABLEVERIFREQ,  Command, &NbByte , pBuffer);
+  M24SR_BuildIBlockCommand2 ( M24SR_CMDSTRUCT_DISABLEVERIFREQ,  Command, &NbByte , pBuffer);
   
   /* send the request */ 
   status = NFC_IO_WriteMultiple(DeviceAddr, pBuffer, NbByte);
@@ -1219,7 +1315,8 @@ uint16_t M24SR_DisableVerificationRequirement (uint16_t DeviceAddr, uint16_t uRe
     return M24SR_ERROR_TIMEOUT;
   } 
   /* The right access to be updated in EEPROM need at least 6ms */    
-  status = M24SR_IsAnswerReady (DeviceAddr);
+  //status = M24SR_IsAnswerReady (DeviceAddr);
+  status = NFC_IO_IsDeviceReady (DeviceAddr, NFC_I2C_TRIALS  );
   if (status != M24SR_STATUS_SUCCESS)
   {
     return status;
@@ -1262,7 +1359,7 @@ uint16_t M24SR_EnablePermanentState (uint16_t DeviceAddr, uint16_t uReadOrWrite 
   Command.Header.P1 = GETMSB  (uReadOrWrite ) ;
   Command.Header.P2 = GETLSB  (uReadOrWrite ) ;
   /* build the I�C command */
-  M24SR_BuildIBlockCommand ( M24SR_CMDSTRUCT_ENABLEVERIFREQ,  Command, &NbByte , pBuffer);
+  M24SR_BuildIBlockCommand2 ( M24SR_CMDSTRUCT_ENABLEVERIFREQ,  Command, &NbByte , pBuffer);
   
   /* send the request */ 
   status = NFC_IO_WriteMultiple(DeviceAddr, pBuffer, NbByte);
@@ -1270,7 +1367,8 @@ uint16_t M24SR_EnablePermanentState (uint16_t DeviceAddr, uint16_t uReadOrWrite 
   {
     return M24SR_ERROR_TIMEOUT;
   } 
-  status = M24SR_IsAnswerReady (DeviceAddr);
+  //status = M24SR_IsAnswerReady (DeviceAddr);
+  status = NFC_IO_IsDeviceReady (DeviceAddr, NFC_I2C_TRIALS  );
   if (status != M24SR_STATUS_SUCCESS)
   {
     return status;
@@ -1313,7 +1411,7 @@ uint16_t M24SR_DisablePermanentState (uint16_t DeviceAddr, uint16_t uReadOrWrite
   Command.Header.P1 = GETMSB  (uReadOrWrite ) ;
   Command.Header.P2 = GETLSB  (uReadOrWrite ) ;
   /* build the I�C command */
-  M24SR_BuildIBlockCommand ( M24SR_CMDSTRUCT_DISABLEVERIFREQ,  Command, &NbByte , pBuffer);
+  M24SR_BuildIBlockCommand2 ( M24SR_CMDSTRUCT_DISABLEVERIFREQ,  Command, &NbByte , pBuffer);
   
   /* send the request */ 
   status = NFC_IO_WriteMultiple(DeviceAddr, pBuffer, NbByte);
@@ -1321,7 +1419,8 @@ uint16_t M24SR_DisablePermanentState (uint16_t DeviceAddr, uint16_t uReadOrWrite
   {
     return M24SR_ERROR_TIMEOUT;
   } 
-  status = M24SR_IsAnswerReady (DeviceAddr);
+  //status = M24SR_IsAnswerReady (DeviceAddr);
+  status = NFC_IO_IsDeviceReady (DeviceAddr, NFC_I2C_TRIALS  );
   if (status != M24SR_STATUS_SUCCESS)
   {
     return status;
@@ -1360,7 +1459,7 @@ uint16_t M24SR_SendInterrupt (uint16_t DeviceAddr)
   Command.Header.P2 = GETLSB  (uP1P2 ) ;
   Command.Body.LC = 0x00 ;
   /* build the I�C command */
-  M24SR_BuildIBlockCommand ( M24SR_CMDSTRUCT_SENDINTERRUPT,  Command, &NbByte , pBuffer);
+  M24SR_BuildIBlockCommand2 ( M24SR_CMDSTRUCT_SENDINTERRUPT,  Command, &NbByte , pBuffer);
   
   /* send the request */ 
   status = NFC_IO_WriteMultiple(DeviceAddr, pBuffer, NbByte);
@@ -1368,7 +1467,8 @@ uint16_t M24SR_SendInterrupt (uint16_t DeviceAddr)
   {
     return M24SR_ERROR_TIMEOUT;
   } 
-  status = M24SR_IsAnswerReady (DeviceAddr);
+  //status = M24SR_IsAnswerReady (DeviceAddr);
+  status = NFC_IO_IsDeviceReady (DeviceAddr, NFC_I2C_TRIALS  );
   if (status != M24SR_STATUS_SUCCESS)
   {
     return status;
@@ -1414,10 +1514,10 @@ uint16_t M24SR_StateControl (uint16_t DeviceAddr, uint8_t uSetOrReset )
   Command.Header.P2 = GETLSB  (uP1P2 ) ;
   Command.Body.LC = 0x01 ;
   /* copy the data */
-  memcpy(Command.Body.pData , &uSetOrReset, 0x01 );
+  //memcpy(Command.Body.pData , &uSetOrReset, 0x01 );
   //Command.Body.LE = 0x00 ;
   /* build the I�C command */
-  M24SR_BuildIBlockCommand ( M24SR_CMDSTRUCT_GPOSTATE,  Command, &NbByte , pBuffer);
+  M24SR_BuildIBlockCommand ( M24SR_CMDSTRUCT_GPOSTATE,  Command, &uSetOrReset, &NbByte , pBuffer);
   
   /* send the request */ 
   status = NFC_IO_WriteMultiple(DeviceAddr, pBuffer, NbByte);
@@ -1425,7 +1525,8 @@ uint16_t M24SR_StateControl (uint16_t DeviceAddr, uint8_t uSetOrReset )
   {
     return M24SR_ERROR_TIMEOUT;
   } 
-  status = M24SR_IsAnswerReady (DeviceAddr);
+  //status = M24SR_IsAnswerReady (DeviceAddr);
+  status = NFC_IO_IsDeviceReady (DeviceAddr, NFC_I2C_TRIALS  );
   if (status != M24SR_STATUS_SUCCESS)
   {
     return status;
@@ -1525,60 +1626,6 @@ uint16_t M24SR_ManageRFGPO(uint16_t DeviceAddr, uint8_t GPO_RFconfig)
   * @retval M24SR_STATUS_SUCCESS : a response of the M24LR is ready
   * @retval M24SR_ERROR_DEFAULT : the response of the M24LR is not ready
   */
-static uint16_t M24SR_IsAnswerReady (uint16_t DeviceAddr)
-{
-  uint32_t retry = 0xFFFFF;
-  uint8_t stable = 0;
-  uint8_t PinState;
-
-  switch (uSynchroMode)
-  {
-  case M24SR_WAITINGTIME_POLLING :
-    if(NFC_IO_IsDeviceReady(DeviceAddr, NFC_IO_TRIALS) != NFC_IO_STATUS_SUCCESS)
-    {
-      return  M24SR_ERROR_TIMEOUT;
-    } 
-    break;
-    
-  case M24SR_WAITINGTIME_TIMEOUT :
-    /* M24SR FWI=5 => (256*16/fc)*2^5=9.6ms but M24SR ask for extended time to program up to 246Bytes. */
-    NFC_IO_Delay(M24SR_ANSWER_TIMEOUT);    
-    break;
-    
-  case M24SR_WAITINGTIME_GPO :
-    /* mbd does not support interrupt for the moment with nucleo board */
-    do
-    {
-      NFC_IO_ReadState(&PinState);
-      if( PinState == 0) /* RESET */
-      {
-        stable ++;                        
-      }
-      retry --;                        
-    }
-    while(stable < M24SR_ANSWER_STABLE && retry>0);
-    if(!retry)
-    {
-      return M24SR_ERROR_TIMEOUT;   
-    }          
-    break;
-    
-  case M24SR_INTERRUPT_GPO :
-    /* Check if the GPIO is not already low before calling this function */
-    NFC_IO_ReadState(&PinState);
-    if(PinState == 1) /* SET */
-    {
-      while (GPO_Low == 0);
-    }
-    GPO_Low = 0;
-    break;
-    
-  default : 
-    return M24SR_ERROR_DEFAULT;
-  }
-  
-  return M24SR_STATUS_SUCCESS;
-}
 
 /**
   * @brief  This function enable or disable RF communication
@@ -1616,6 +1663,11 @@ static void M24SR_SetI2CSynchroMode( uint8_t WaitingMode)
     else
         uSynchroMode = WaitingMode;
   }
+}
+
+void NFC_IO_Delay(uint32_t Delay)
+{
+  HAL_Delay(Delay);
 }
 
 

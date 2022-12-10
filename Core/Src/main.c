@@ -33,6 +33,8 @@
 
 /* Private define ------------------------------------------------------------*/
 /* USER CODE BEGIN PD */
+uint8_t buffet[BUFFER_SIZE];
+uint8_t ndef_data[128];
 /* USER CODE END PD */
 
 /* Private macro -------------------------------------------------------------*/
@@ -70,14 +72,7 @@ int main(void)
   /* MCU Configuration--------------------------------------------------------*/
 
   /* Reset of all peripherals, Initializes the Flash interface and the Systick. */
-  LL_APB2_GRP1_EnableClock(LL_APB2_GRP1_PERIPH_SYSCFG);
-  LL_APB1_GRP1_EnableClock(LL_APB1_GRP1_PERIPH_PWR);
-
-  /* System interrupt init*/
-  NVIC_SetPriorityGrouping(NVIC_PRIORITYGROUP_4);
-
-  /* SysTick_IRQn interrupt configuration */
-  NVIC_SetPriority(SysTick_IRQn, NVIC_EncodePriority(NVIC_GetPriorityGrouping(),15, 0));
+  HAL_Init();
 
   /* USER CODE BEGIN Init */
 
@@ -93,9 +88,10 @@ int main(void)
   /* Initialize all configured peripherals */
   MX_GPIO_Init();
   MX_I2C1_Init();
+  uint8_t success1 = M24SR_KillSession (M24SR_I2C_ADDR_WRITE);
+  uint8_t success2 =  M24SR_SelectApplication (M24SR_I2C_ADDR_WRITE);
+  uint8_t success3 = M24SR_Deselect (M24SR_I2C_ADDR_WRITE);
   /* USER CODE BEGIN 2 */
-
-  /* USER CODE END 2 */
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
@@ -107,6 +103,7 @@ int main(void)
   }
   /* USER CODE END 3 */
 }
+
 
 /**
   * @brief System Clock Configuration
@@ -136,8 +133,13 @@ void SystemClock_Config(void)
   {
 
   }
-  LL_Init1msTick(8000000);
   LL_SetSystemCoreClock(8000000);
+
+   /* Update the time base */
+  if (HAL_InitTick (TICK_INT_PRIORITY) != HAL_OK)
+  {
+    Error_Handler();
+  }
   LL_RCC_SetI2CClockSource(LL_RCC_I2C1_CLKSOURCE_HSI);
 }
 
