@@ -15,6 +15,8 @@ STM s NFC chipom po priložení mobilného zariadenia odošle vtipný vtip do pr
 
 Datasheet pre M24SR64-Y : https://www.st.com/resource/en/datasheet/m24sr64-y.pdf
 
+NDEF : https://www.st.com/resource/en/application_note/dm00105043-storing-data-into-the-ndef-memory-of-m24sr-stmicroelectronics.pdf
+
 M24sr : https://www.st.com/en/nfc/m24sr-series-dynamic-nfc-tags.html?ecmp=ss1812_link_kits_jan2014&sc=m24sr
 
 YT videa : https://www.youtube.com/watch?v=O_m8YdlH_O4&list=PLnMKNibPkDnF6kGJbnMNSkSvUPhT-FgCN&index=24&ab_channel=STMicroelectronics
