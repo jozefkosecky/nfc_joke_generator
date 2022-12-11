@@ -82,6 +82,8 @@
 #define M24SR_PWD_NEEDED       (uint16_t) 0x6300
 #define M24SR_PWD_CORRECT      (uint16_t) 0x9000
 
+
+
 /**
   * @}
   */

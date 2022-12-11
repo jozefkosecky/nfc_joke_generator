@@ -75,8 +75,10 @@ void Error_Handler(void);
 #define PCB_FIELD_02 			   (uint8_t)  0x02
 #define PCB_FIELD_03 			   (uint8_t)  0x03
 #define CRC_1					   (uint8_t)  0x35
-#define CRC_2					   (uint8_t)  0xC0
+#define CRC_2					     0xC0
 #define BUFFER_SIZE					16
+#define READ					    (uint8_t) 0x0001
+#define WRITE					    (uint8_t) 0x0002
 /* USER CODE END Private defines */
 
 #ifdef __cplusplus

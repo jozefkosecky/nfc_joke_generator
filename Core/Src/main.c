@@ -33,8 +33,7 @@
 
 /* Private define ------------------------------------------------------------*/
 /* USER CODE BEGIN PD */
-uint8_t buffet[BUFFER_SIZE];
-uint8_t ndef_data[128];
+#define NDEF_FILE_ID            0x0001
 /* USER CODE END PD */
 
 /* Private macro -------------------------------------------------------------*/
@@ -45,7 +44,10 @@ uint8_t ndef_data[128];
 /* Private variables ---------------------------------------------------------*/
 
 /* USER CODE BEGIN PV */
-
+uint8_t buffer[256];
+uint8_t ndef_data[256];
+uint8_t DefaultPassword[16]={0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+  0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00};
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -88,9 +90,29 @@ int main(void)
   /* Initialize all configured peripherals */
   MX_GPIO_Init();
   MX_I2C1_Init();
-  uint8_t success1 = M24SR_KillSession (M24SR_I2C_ADDR_WRITE);
-  uint8_t success2 =  M24SR_SelectApplication (M24SR_I2C_ADDR_WRITE);
-  uint8_t success3 = M24SR_Deselect (M24SR_I2C_ADDR_WRITE);
+
+  // 8.1 Selection of an NDEF message
+  uint16_t success1 = M24SR_KillSession (M24SR_I2C_ADDR_WRITE); //Otvorenie I2C komunikácie
+  uint16_t success2 =  M24SR_SelectApplication (M24SR_I2C_ADDR_WRITE); //Odoslanie príkazu SelectNDEFTagApplication
+  uint16_t success3 =  M24SR_SelectCCfile (M24SR_I2C_ADDR_WRITE); //Vybratie CC súboru
+  uint16_t success4 =  M24SR_ReadBinary (M24SR_I2C_ADDR_WRITE, 0x00 ,0x02 , buffer); //prečítanie dĺžky CC súboru
+  uint16_t success42 =  M24SR_ReadBinary (M24SR_I2C_ADDR_WRITE, 0x00 ,buffer[1] , buffer); //prečítanie CC súboru
+  uint16_t success5 =  M24SR_SelectNDEFfile (M24SR_I2C_ADDR_WRITE, NDEF_FILE_ID); //vybratie NDEF súboru
+  uint16_t success6 = M24SR_Verify(M24SR_I2C_ADDR_WRITE, WRITE ,0x10 ,DefaultPassword ); //odomknutie NDEF file na write
+  uint8_t ndefLengthZero[] = {0x00,0x00};
+  uint16_t success7 = M24SR_UpdateBinary (M24SR_I2C_ADDR_WRITE, 0x00 , 2, ndefLengthZero); //Prepísanie dĺžky NDEF na 0
+  uint8_t testSprava[] = {0x01,0x02,0x03,0x04,0x05,0x06,0x07,0x08};
+  uint16_t success8 = M24SR_UpdateBinary (M24SR_I2C_ADDR_WRITE, 0x02 , sizeof(testSprava), testSprava); //Zapisanie spravy od 3 pozicie, 1,2 vyhradene pre dlzku spravy
+  uint8_t dlzka = sizeof(testSprava);
+  uint16_t success9 = M24SR_UpdateBinary (M24SR_I2C_ADDR_WRITE, 0x01 , 1, dlzka); //Zapisanie dlzky NDEF spravy
+
+
+
+  //uint8_t success12 = M24SR_DisableVerificationRequirement (M24SR_I2C_ADDR_WRITE, WRITE);
+  //uint8_t success110 = M24SR_Verify(M24SR_I2C_ADDR_WRITE, READ ,0x10 ,DefaultPassword );
+  //uint8_t success13 = M24SR_DisableVerificationRequirement (M24SR_I2C_ADDR_WRITE, READ);
+
+  uint8_t successEnd = M24SR_Deselect (M24SR_I2C_ADDR_WRITE);
   /* USER CODE BEGIN 2 */
 
   /* Infinite loop */

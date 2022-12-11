@@ -126,7 +126,7 @@ typedef enum{
   */
 #define SYSTEM_FILE_ID          0xE101   
 #define CC_FILE_ID              0xE103
-#define NDEF_FILE_ID            0x0001   
+#define NDEF_FILE_ID            0x0001
   
 /**
   * @brief  M24SR_Private_Command_Management
