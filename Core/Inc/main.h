@@ -28,7 +28,6 @@ extern "C" {
 
 /* Includes ------------------------------------------------------------------*/
 #include "stm32f3xx_hal.h"
-#include "stdint.h"
 
 #include "stm32f3xx_ll_rcc.h"
 #include "stm32f3xx_ll_bus.h"
@@ -42,7 +41,7 @@ extern "C" {
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
-
+#include "stdint.h"
 /* USER CODE END Includes */
 
 /* Exported types ------------------------------------------------------------*/
@@ -64,10 +63,13 @@ extern "C" {
 void Error_Handler(void);
 
 /* USER CODE BEGIN EFP */
-
+void Write_Joke_To_NFC(void);
+void Write_Joke_Message(char *jokeBuffer, uint8_t *NDEFmessage);
 /* USER CODE END EFP */
 
 /* Private defines -----------------------------------------------------------*/
+#define NFC_GPO_Pin 				LL_GPIO_PIN_3
+#define NFC_GPO_GPIO_Port 			GPIOA
 
 /* USER CODE BEGIN Private defines */
 #define M24SR_I2C_ADDR_WRITE       (uint8_t)  0xAC

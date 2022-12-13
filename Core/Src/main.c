@@ -19,6 +19,7 @@
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
 #include "i2c.h"
+#include "m24sr.h"
 #include "gpio.h"
 
 /* Private includes ----------------------------------------------------------*/
@@ -28,6 +29,15 @@
 
 /* Private typedef -----------------------------------------------------------*/
 /* USER CODE BEGIN PTD */
+
+typedef enum{
+  HIGH_IMPEDANCE= 0,
+  SESSION_OPENED,
+  WIP,
+  I2C_ANSWER_READY,
+  INTERRUPT,
+  STATE_CONTROL
+}M24SR_GPO_MGMT;
 
 /* USER CODE END PTD */
 
@@ -45,7 +55,7 @@
 
 /* USER CODE BEGIN PV */
 uint8_t buffer[256];
-uint8_t ndef_data[256];
+
 uint8_t DefaultPassword[16]={0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
   0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00};
 /* USER CODE END PV */
@@ -90,71 +100,24 @@ int main(void)
   /* Initialize all configured peripherals */
   MX_GPIO_Init();
   MX_I2C1_Init();
-
-  // 8.1 Selection of an NDEF message
-  uint16_t success1 = M24SR_KillSession (M24SR_I2C_ADDR_WRITE); //Otvorenie I2C komunikácie
-  uint16_t success2 =  M24SR_SelectApplication (M24SR_I2C_ADDR_WRITE); //Odoslanie príkazu SelectNDEFTagApplication
-  uint16_t success3 =  M24SR_SelectCCfile (M24SR_I2C_ADDR_WRITE); //Vybratie CC súboru
-//  uint16_t success4 =  M24SR_ReadBinary (M24SR_I2C_ADDR_WRITE, 0x00 ,0x02 , buffer); //prečítanie dĺžky CC súboru
-//  uint16_t success42 =  M24SR_ReadBinary (M24SR_I2C_ADDR_WRITE, 0x00 ,buffer[1] , buffer); //prečítanie CC súboru
-  uint16_t success5 =  M24SR_SelectNDEFfile (M24SR_I2C_ADDR_WRITE, NDEF_FILE_ID); //vybratie NDEF súboru
-  uint16_t success6 = M24SR_Verify(M24SR_I2C_ADDR_WRITE, WRITE ,0x10 ,DefaultPassword ); //odomknutie NDEF file na write
-
-  char sprava[] = "Zraz na discorde o 13:00";
-
-  uint8_t dlzka_payload = sizeof(sprava);
-  dlzka_payload += 3;
-  uint8_t dlzka_spravy = sizeof(sprava) + 7;
-
-  uint8_t default_param[] = {0x00, dlzka_spravy, 0xd1, 0x1, dlzka_payload, 0x54, 0x2, 0x65, 0x6e};
-
-  int32_t celkova_dlzka = sizeof(default_param) + sizeof(sprava);
-  uint8_t testSprava[celkova_dlzka];
-
-
-  memcpy(testSprava, default_param, sizeof(default_param));
-  memcpy(testSprava + sizeof(default_param), sprava, sizeof(sprava));
-
-  uint16_t success8 = M24SR_UpdateBinary (M24SR_I2C_ADDR_WRITE, 0x00 , sizeof(testSprava), testSprava); //Zapisanie spravy od 3 pozicie, 1,2 vyhradene pre dlzku spravy
-
-
- /* uint16_t success15 =  M24SR_SelectNDEFfile (M24SR_I2C_ADDR_WRITE, NDEF_FILE_ID); //vybratie NDEF súboru
-  uint16_t success9 = M24SR_UpdateBinary (M24SR_I2C_ADDR_WRITE, 0x01 , 1, 0x08); //Zapisanie dlzky NDEF spravy
-*/
-
-
-  //uint8_t success12 = M24SR_DisableVerificationRequirement (M24SR_I2C_ADDR_WRITE, WRITE);
-  //uint8_t success110 = M24SR_Verify(M24SR_I2C_ADDR_WRITE, READ ,0x10 ,DefaultPassword );
-  //uint8_t success13 = M24SR_DisableVerificationRequirement (M24SR_I2C_ADDR_WRITE, READ);
-
-
   /* USER CODE BEGIN 2 */
+  M24SR_ManageRFGPO(M24SR_I2C_ADDR_WRITE, SESSION_OPENED); //nastavenie GPO na session_open
+  Write_Joke_To_NFC();
+  /* USER CODE END 2 */
 
-  //uint16_t success14 =  M24SR_SelectApplication (M24SR_I2C_ADDR_WRITE); //Odoslanie príkazu SelectNDEFTagApplication
-  uint16_t success10 = M24SR_Verify(M24SR_I2C_ADDR_WRITE, READ ,0x10 ,DefaultPassword ); //odomknutie NDEF file na reade
-  uint16_t success11 =  M24SR_SelectNDEFfile (M24SR_I2C_ADDR_WRITE, NDEF_FILE_ID); //vybratie NDEF súboru
-  uint16_t success12 =  M24SR_ReadBinary (M24SR_I2C_ADDR_WRITE, 0x00 ,0x02 , buffer); //prečítanie dĺžky CC súboru
-
-  uint8_t dlzka = buffer[1];	// dlzka spravy
-  dlzka += 2;					// celkova dlzka buffera
-
-  //NbByteToRead musi byt celkova dlzka
-  uint16_t success13 =  M24SR_ReadBinary (M24SR_I2C_ADDR_WRITE, 0x00 ,dlzka , buffer); //prečítanie CC súboru
-
-  uint8_t successEnd = M24SR_Deselect (M24SR_I2C_ADDR_WRITE);
-
-  //uint16_t success14 = M24SR_KillSession (M24SR_I2C_ADDR_WRITE); //Otvorenie I2C komunikácie
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
   while (1)
   {
     /* USER CODE END WHILE */
+	  if(LL_GPIO_IsInputPinSet(NFC_GPO_GPIO_Port, NFC_GPO_Pin))
+	  {
 
+	  }
     /* USER CODE BEGIN 3 */
   }
   /* USER CODE END 3 */
 }
-
 
 /**
   * @brief System Clock Configuration
@@ -195,7 +158,47 @@ void SystemClock_Config(void)
 }
 
 /* USER CODE BEGIN 4 */
+void Write_Joke_To_NFC(void){
 
+	uint8_t ndef_data[256];
+	uint16_t success1 = M24SR_KillSession (M24SR_I2C_ADDR_WRITE); //Otvorenie I2C komunikácie
+	uint16_t success2 =  M24SR_SelectApplication (M24SR_I2C_ADDR_WRITE); //Odoslanie príkazu SelectNDEFTagApplication
+	uint16_t success3 =  M24SR_SelectCCfile (M24SR_I2C_ADDR_WRITE); //Vybratie CC súboru
+	uint16_t success5 =  M24SR_SelectNDEFfile (M24SR_I2C_ADDR_WRITE, NDEF_FILE_ID); //vybratie NDEF súboru
+	uint16_t success6 = M24SR_Verify(M24SR_I2C_ADDR_WRITE, WRITE ,0x10 ,DefaultPassword ); //odomknutie NDEF file na write
+
+	char sprava[] = "Zraz na discorde o 13:00";
+
+	Write_Joke_Message(sprava, ndef_data);
+
+	uint16_t success8 = M24SR_UpdateBinary (M24SR_I2C_ADDR_WRITE, 0x00 , sizeof(ndef_data), ndef_data); //Zapisanie spravy
+	uint16_t success10 = M24SR_Verify(M24SR_I2C_ADDR_WRITE, READ ,0x10 ,DefaultPassword ); //odomknutie NDEF file na reade
+	uint16_t success11 =  M24SR_SelectNDEFfile (M24SR_I2C_ADDR_WRITE, NDEF_FILE_ID); //vybratie NDEF súboru
+	uint16_t success12 =  M24SR_ReadBinary (M24SR_I2C_ADDR_WRITE, 0x00 ,0x02 , buffer); //prečítanie dĺžky NDEF súboru
+
+	uint8_t dlzka = buffer[1];	// dlzka spravy
+	dlzka += 2;					// celkova dlzka buffera
+
+	   //NbByteToRead musi byt celkova dlzka
+	uint16_t success13 =  M24SR_ReadBinary (M24SR_I2C_ADDR_WRITE, 0x00 ,dlzka , buffer); //prečítanie NDEF súboru
+	uint8_t successEnd = M24SR_Deselect (M24SR_I2C_ADDR_WRITE);
+
+}
+
+void Write_Joke_Message(char *jokeBuffer, uint8_t *NDEFmessage){
+
+	uint8_t dlzka_payload = sizeof(jokeBuffer);
+	dlzka_payload += 3;
+	uint8_t dlzka_spravy = sizeof(jokeBuffer) + 7;
+	uint8_t default_param[] = {0x00, dlzka_spravy, 0xd1, 0x1, dlzka_payload, 0x54, 0x2, 0x65, 0x6e};
+	//int32_t celkova_dlzka = sizeof(default_param) + sizeof(jokeBuffer);
+	uint16_t joke_dlzka = sizeof(jokeBuffer);
+	uint16_t param_dlzka = sizeof(default_param);
+
+	memcpy(NDEFmessage, default_param, param_dlzka);
+	memcpy(NDEFmessage + param_dlzka, jokeBuffer, joke_dlzka);
+
+}
 /* USER CODE END 4 */
 
 /**

@@ -47,9 +47,7 @@ extern I2C_HandleTypeDef hi2c1;
 /* USER CODE END Private defines */
 
 void MX_I2C1_Init(void);
-uint16_t NFC_IO_WriteMultiple (uint8_t Addr, uint8_t *pBuffer, uint16_t Length);
-uint16_t NFC_IO_IsDeviceReady (uint8_t Addr, uint32_t Trials);
-uint16_t NFC_IO_ReadMultiple (uint8_t Addr, uint8_t *pBuffer, uint16_t Length );
+
 /* USER CODE BEGIN Prototypes */
 
 /* USER CODE END Prototypes */

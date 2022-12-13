@@ -132,8 +132,6 @@ void HAL_I2C_MspDeInit(I2C_HandleTypeDef* i2cHandle)
   }
 }
 
-
-
 /* USER CODE BEGIN 1 */
 uint16_t   NFC_IO_IsDeviceReady (uint8_t Addr, uint32_t Trials)
 {
