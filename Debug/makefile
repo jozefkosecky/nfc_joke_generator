@@ -34,34 +34,34 @@ $(wildcard ../makefile.init) \
 $(wildcard ../makefile.targets) \
 
 
-BUILD_ARTIFACT_NAME := NFC
+BUILD_ARTIFACT_NAME := NFC-M24SR
 BUILD_ARTIFACT_EXTENSION := elf
 BUILD_ARTIFACT_PREFIX :=
 BUILD_ARTIFACT := $(BUILD_ARTIFACT_PREFIX)$(BUILD_ARTIFACT_NAME)$(if $(BUILD_ARTIFACT_EXTENSION),.$(BUILD_ARTIFACT_EXTENSION),)
 
 # Add inputs and outputs from these tool invocations to the build variables 
 EXECUTABLES += \
-NFC.elf \
+NFC-M24SR.elf \
 
 MAP_FILES += \
-NFC.map \
+NFC-M24SR.map \
 
 SIZE_OUTPUT += \
 default.size.stdout \
 
 OBJDUMP_LIST += \
-NFC.list \
+NFC-M24SR.list \
 
 
 # All Target
 all: main-build
 
 # Main-build Target
-main-build: NFC.elf secondary-outputs
+main-build: NFC-M24SR.elf secondary-outputs
 
 # Tool invocations
-NFC.elf NFC.map: $(OBJS) $(USER_OBJS) C:\Users\pao\STM32CubeIDE\workspace_1.11.0\NFC\STM32F303K8TX_FLASH.ld makefile objects.list $(OPTIONAL_TOOL_DEPS)
-	arm-none-eabi-gcc -o "NFC.elf" @"objects.list" $(USER_OBJS) $(LIBS) -mcpu=cortex-m4 -T"C:\Users\pao\STM32CubeIDE\workspace_1.11.0\NFC\STM32F303K8TX_FLASH.ld" --specs=nosys.specs -Wl,-Map="NFC.map" -Wl,--gc-sections -static --specs=nano.specs -mfpu=fpv4-sp-d16 -mfloat-abi=hard -mthumb -Wl,--start-group -lc -lm -Wl,--end-group
+NFC-M24SR.elf NFC-M24SR.map: $(OBJS) $(USER_OBJS) C:\Users\jkose\Documents\vysoka\ skola\4.rocnik\Vnorene\ systemy\cvicenia\nfc\nfc_joke_generator\STM32F303K8TX_FLASH.ld makefile objects.list $(OPTIONAL_TOOL_DEPS)
+	arm-none-eabi-gcc -o "NFC-M24SR.elf" @"objects.list" $(USER_OBJS) $(LIBS) -mcpu=cortex-m4 -T"C:\Users\jkose\Documents\vysoka skola\4.rocnik\Vnorene systemy\cvicenia\nfc\nfc_joke_generator\STM32F303K8TX_FLASH.ld" --specs=nosys.specs -Wl,-Map="NFC-M24SR.map" -Wl,--gc-sections -static --specs=nano.specs -mfpu=fpv4-sp-d16 -mfloat-abi=hard -mthumb -Wl,--start-group -lc -lm -Wl,--end-group
 	@echo 'Finished building target: $@'
 	@echo ' '
 
@@ -70,14 +70,14 @@ default.size.stdout: $(EXECUTABLES) makefile objects.list $(OPTIONAL_TOOL_DEPS)
 	@echo 'Finished building: $@'
 	@echo ' '
 
-NFC.list: $(EXECUTABLES) makefile objects.list $(OPTIONAL_TOOL_DEPS)
-	arm-none-eabi-objdump -h -S $(EXECUTABLES) > "NFC.list"
+NFC-M24SR.list: $(EXECUTABLES) makefile objects.list $(OPTIONAL_TOOL_DEPS)
+	arm-none-eabi-objdump -h -S $(EXECUTABLES) > "NFC-M24SR.list"
 	@echo 'Finished building: $@'
 	@echo ' '
 
 # Other Targets
 clean:
-	-$(RM) NFC.elf NFC.list NFC.map default.size.stdout
+	-$(RM) NFC-M24SR.elf NFC-M24SR.list NFC-M24SR.map default.size.stdout
 	-@echo ' '
 
 secondary-outputs: $(SIZE_OUTPUT) $(OBJDUMP_LIST)

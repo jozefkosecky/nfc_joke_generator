@@ -95,26 +95,55 @@ int main(void)
   uint16_t success1 = M24SR_KillSession (M24SR_I2C_ADDR_WRITE); //Otvorenie I2C komunikácie
   uint16_t success2 =  M24SR_SelectApplication (M24SR_I2C_ADDR_WRITE); //Odoslanie príkazu SelectNDEFTagApplication
   uint16_t success3 =  M24SR_SelectCCfile (M24SR_I2C_ADDR_WRITE); //Vybratie CC súboru
-  uint16_t success4 =  M24SR_ReadBinary (M24SR_I2C_ADDR_WRITE, 0x00 ,0x02 , buffer); //prečítanie dĺžky CC súboru
-  uint16_t success42 =  M24SR_ReadBinary (M24SR_I2C_ADDR_WRITE, 0x00 ,buffer[1] , buffer); //prečítanie CC súboru
+//  uint16_t success4 =  M24SR_ReadBinary (M24SR_I2C_ADDR_WRITE, 0x00 ,0x02 , buffer); //prečítanie dĺžky CC súboru
+//  uint16_t success42 =  M24SR_ReadBinary (M24SR_I2C_ADDR_WRITE, 0x00 ,buffer[1] , buffer); //prečítanie CC súboru
   uint16_t success5 =  M24SR_SelectNDEFfile (M24SR_I2C_ADDR_WRITE, NDEF_FILE_ID); //vybratie NDEF súboru
   uint16_t success6 = M24SR_Verify(M24SR_I2C_ADDR_WRITE, WRITE ,0x10 ,DefaultPassword ); //odomknutie NDEF file na write
-  uint8_t ndefLengthZero[] = {0x00,0x00};
-  uint16_t success7 = M24SR_UpdateBinary (M24SR_I2C_ADDR_WRITE, 0x00 , 2, ndefLengthZero); //Prepísanie dĺžky NDEF na 0
-  uint8_t testSprava[] = {0x01,0x02,0x03,0x04,0x05,0x06,0x07,0x08};
-  uint16_t success8 = M24SR_UpdateBinary (M24SR_I2C_ADDR_WRITE, 0x02 , sizeof(testSprava), testSprava); //Zapisanie spravy od 3 pozicie, 1,2 vyhradene pre dlzku spravy
-  uint8_t dlzka = sizeof(testSprava);
-  uint16_t success9 = M24SR_UpdateBinary (M24SR_I2C_ADDR_WRITE, 0x01 , 1, dlzka); //Zapisanie dlzky NDEF spravy
 
+  char sprava[] = "Zraz na discorde o 13:00";
+
+  uint8_t dlzka_payload = sizeof(sprava);
+  dlzka_payload += 3;
+  uint8_t dlzka_spravy = sizeof(sprava) + 7;
+
+  uint8_t default_param[] = {0x00, dlzka_spravy, 0xd1, 0x1, dlzka_payload, 0x54, 0x2, 0x65, 0x6e};
+
+  int32_t celkova_dlzka = sizeof(default_param) + sizeof(sprava);
+  uint8_t testSprava[celkova_dlzka];
+
+
+  memcpy(testSprava, default_param, sizeof(default_param));
+  memcpy(testSprava + sizeof(default_param), sprava, sizeof(sprava));
+
+  uint16_t success8 = M24SR_UpdateBinary (M24SR_I2C_ADDR_WRITE, 0x00 , sizeof(testSprava), testSprava); //Zapisanie spravy od 3 pozicie, 1,2 vyhradene pre dlzku spravy
+
+
+ /* uint16_t success15 =  M24SR_SelectNDEFfile (M24SR_I2C_ADDR_WRITE, NDEF_FILE_ID); //vybratie NDEF súboru
+  uint16_t success9 = M24SR_UpdateBinary (M24SR_I2C_ADDR_WRITE, 0x01 , 1, 0x08); //Zapisanie dlzky NDEF spravy
+*/
 
 
   //uint8_t success12 = M24SR_DisableVerificationRequirement (M24SR_I2C_ADDR_WRITE, WRITE);
   //uint8_t success110 = M24SR_Verify(M24SR_I2C_ADDR_WRITE, READ ,0x10 ,DefaultPassword );
   //uint8_t success13 = M24SR_DisableVerificationRequirement (M24SR_I2C_ADDR_WRITE, READ);
 
-  uint8_t successEnd = M24SR_Deselect (M24SR_I2C_ADDR_WRITE);
+
   /* USER CODE BEGIN 2 */
 
+  //uint16_t success14 =  M24SR_SelectApplication (M24SR_I2C_ADDR_WRITE); //Odoslanie príkazu SelectNDEFTagApplication
+  uint16_t success10 = M24SR_Verify(M24SR_I2C_ADDR_WRITE, READ ,0x10 ,DefaultPassword ); //odomknutie NDEF file na reade
+  uint16_t success11 =  M24SR_SelectNDEFfile (M24SR_I2C_ADDR_WRITE, NDEF_FILE_ID); //vybratie NDEF súboru
+  uint16_t success12 =  M24SR_ReadBinary (M24SR_I2C_ADDR_WRITE, 0x00 ,0x02 , buffer); //prečítanie dĺžky CC súboru
+
+  uint8_t dlzka = buffer[1];	// dlzka spravy
+  dlzka += 2;					// celkova dlzka buffera
+
+  //NbByteToRead musi byt celkova dlzka
+  uint16_t success13 =  M24SR_ReadBinary (M24SR_I2C_ADDR_WRITE, 0x00 ,dlzka , buffer); //prečítanie CC súboru
+
+  uint8_t successEnd = M24SR_Deselect (M24SR_I2C_ADDR_WRITE);
+
+  //uint16_t success14 = M24SR_KillSession (M24SR_I2C_ADDR_WRITE); //Otvorenie I2C komunikácie
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
   while (1)
