@@ -98,9 +98,10 @@ int main(void)
   /* USER CODE BEGIN SysInit */
 
   /* USER CODE END SysInit */
-  int rows = 4;
+  int rows = 5;
   int columns = 255;
-  char array[4][255] = { "Ahojte", "Uz to", "funguje", "aj so zamiesanim"};
+  char jokes[5][255];
+  createJokes(jokes);
   int i = 0;
   /* Initialize all configured peripherals */
   MX_GPIO_Init();
@@ -108,7 +109,7 @@ int main(void)
   /* USER CODE BEGIN 2 */
   M24SR_ManageRFGPO(M24SR_I2C_ADDR_WRITE, SESSION_OPENED); //nastavenie GPO na session_open
   char message[255];
-  strcpy(message, array[i]);
+  strcpy(message, jokes[i]);
 
   Write_Joke_To_NFC(message);
 
@@ -131,11 +132,11 @@ int main(void)
 
 		  i++;
 		  if(i == rows){
-			  shuffle(array, rows);
+			  shuffle(jokes, rows);
 			  i = 0;
 		  }
 		  char message[255];
-		  strcpy(message, array[i]);
+		  strcpy(message, jokes[i]);
 
 		  Write_Joke_To_NFC(message);
 		  newJoke = 0;
@@ -158,6 +159,15 @@ void shuffle(char array[][255], int rows){
 		strcpy(array[i], array[j]);
 		strcpy(array[j],temp);
 	}
+}
+
+void createJokes(char array[][255]) {
+	strcpy(array[0], "Ahojte\0");
+	strcpy(array[1], "uz to\0");
+	strcpy(array[2], "funguje\0");
+	strcpy(array[3], "aj so zamiesanim!\0");
+	strcpy(array[4], "Parada!\0");
+
 }
 
 /**
