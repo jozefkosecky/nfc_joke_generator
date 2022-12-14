@@ -65,6 +65,7 @@ void Error_Handler(void);
 /* USER CODE BEGIN EFP */
 void Write_Joke_To_NFC(char message[]);
 void Write_Joke_Message(char *jokeBuffer, uint8_t *NDEFmessage);
+void shuffle(char array[][255], int rows);
 /* USER CODE END EFP */
 
 /* Private defines -----------------------------------------------------------*/

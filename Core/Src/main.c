@@ -21,7 +21,9 @@
 #include "i2c.h"
 #include "m24sr.h"
 #include "gpio.h"
-
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
 
@@ -96,13 +98,18 @@ int main(void)
   /* USER CODE BEGIN SysInit */
 
   /* USER CODE END SysInit */
-
+  int rows = 4;
+  int columns = 255;
+  char array[4][255] = { "Ahojte", "Uz to", "funguje", "aj so zamiesanim"};
+  int i = 0;
   /* Initialize all configured peripherals */
   MX_GPIO_Init();
   MX_I2C1_Init();
   /* USER CODE BEGIN 2 */
   M24SR_ManageRFGPO(M24SR_I2C_ADDR_WRITE, SESSION_OPENED); //nastavenie GPO na session_open
-  char message[] = "Zraz na discorde";
+  char message[255];
+  strcpy(message, array[i]);
+
   Write_Joke_To_NFC(message);
 
   uint8_t newJoke = 0;
@@ -111,6 +118,7 @@ int main(void)
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
 
+	// Free memory when done
   while (1)
   {
     /* USER CODE END WHILE */
@@ -119,14 +127,37 @@ int main(void)
 		  newJoke = 1;
 	  }
 	  if(LL_GPIO_IsInputPinSet(NFC_GPO_GPIO_Port, NFC_GPO_Pin) && newJoke){
-		  LL_mDelay(100);
-		  char message[] = "Zraz na ts";
+		  LL_mDelay(200);
+
+		  i++;
+		  if(i == rows){
+			  shuffle(array, rows);
+			  i = 0;
+		  }
+		  char message[255];
+		  strcpy(message, array[i]);
+
 		  Write_Joke_To_NFC(message);
 		  newJoke = 0;
 	  }
     /* USER CODE BEGIN 3 */
   }
   /* USER CODE END 3 */
+}
+
+void shuffle(char array[][255], int rows){
+	// Seed the random number generator
+	srand(time(NULL));
+
+	// Shuffle the array by swapping each element with a random
+	// element in the array
+	for (int i = 0; i < rows; i++) {
+		int j = rand() % rows;
+		char temp[255];
+		strcpy(temp, array[i]);
+		strcpy(array[i], array[j]);
+		strcpy(array[j],temp);
+	}
 }
 
 /**
@@ -224,6 +255,7 @@ void Write_Joke_Message(char *jokeBuffer, uint8_t *NDEFmessage){
 	memcpy(NDEFmessage + param_dlzka, *jokeBuffer, joke_dlzka);
 
 }
+
 /* USER CODE END 4 */
 
 /**
