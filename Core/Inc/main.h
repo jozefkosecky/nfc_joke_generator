@@ -63,7 +63,7 @@ extern "C" {
 void Error_Handler(void);
 
 /* USER CODE BEGIN EFP */
-void Write_Joke_To_NFC(char message[]);
+uint16_t Write_Joke_To_NFC(char message[]);
 void Write_Joke_Message(char *jokeBuffer, uint8_t *NDEFmessage);
 void shuffle(char array[][255], int rows);
 /* USER CODE END EFP */
@@ -82,6 +82,7 @@ void shuffle(char array[][255], int rows);
 #define BUFFER_SIZE					16
 #define READ					    (uint8_t) 0x0001
 #define WRITE					    (uint8_t) 0x0002
+#define ERROR_BAD_LENGTH			(uint16_t) 0x0069
 /* USER CODE END Private defines */
 
 #ifdef __cplusplus

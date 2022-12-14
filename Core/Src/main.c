@@ -57,7 +57,7 @@ typedef enum{
 
 /* USER CODE BEGIN PV */
 uint8_t buffer[256];
-
+uint16_t error;
 uint8_t DefaultPassword[16]={0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
   0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00};
 /* USER CODE END PV */
@@ -137,8 +137,10 @@ int main(void)
 		  char message[255];
 		  strcpy(message, array[i]);
 
-		  Write_Joke_To_NFC(message);
-		  newJoke = 0;
+		  if(Write_Joke_To_NFC(message) == M24SR_ACTION_COMPLETED){
+			  newJoke = 0;
+		  }
+
 	  }
     /* USER CODE BEGIN 3 */
   }
@@ -199,23 +201,45 @@ void SystemClock_Config(void)
 }
 
 /* USER CODE BEGIN 4 */
-void Write_Joke_To_NFC(char message[]){
+uint16_t Write_Joke_To_NFC(char message[]){
 
 
-	uint16_t success1 = M24SR_KillSession (M24SR_I2C_ADDR_WRITE); //Otvorenie I2C komunikácie
-	uint16_t success2 =  M24SR_SelectApplication (M24SR_I2C_ADDR_WRITE); //Odoslanie príkazu SelectNDEFTagApplication
-	uint16_t success3 =  M24SR_SelectCCfile (M24SR_I2C_ADDR_WRITE); //Vybratie CC súboru
-	uint16_t success5 =  M24SR_SelectNDEFfile (M24SR_I2C_ADDR_WRITE, NDEF_FILE_ID); //vybratie NDEF súboru
-	uint16_t success6 = M24SR_Verify(M24SR_I2C_ADDR_WRITE, WRITE ,0x10 ,DefaultPassword ); //odomknutie NDEF file na write
+
+	  if ((error = M24SR_KillSession (M24SR_I2C_ADDR_WRITE)) != M24SR_ACTION_COMPLETED)
+	  {
+	    return error;
+	  }
+
+//Odoslanie príkazu SelectNDEFTagApplication
+	  if ((error = M24SR_SelectApplication (M24SR_I2C_ADDR_WRITE)) != M24SR_ACTION_COMPLETED)
+	  {
+	    return error;
+	  }
+
+//Vybratie CC súboru
+	  if ((error = M24SR_SelectCCfile (M24SR_I2C_ADDR_WRITE)) != M24SR_ACTION_COMPLETED)
+	  {
+	    return error;
+	  }
+
+//vybratie NDEF súboru
+	  if ((error = M24SR_SelectNDEFfile (M24SR_I2C_ADDR_WRITE, NDEF_FILE_ID)) != M24SR_ACTION_COMPLETED)
+	  {
+	    return error;
+	  }
+
+//odomknutie NDEF file na write
+	  if ((error = M24SR_Verify(M24SR_I2C_ADDR_WRITE, WRITE ,0x10 ,DefaultPassword )) != M24SR_ACTION_COMPLETED)
+	  {
+	    return error;
+	  }
 
 	//char message[] = "Zraz na discorde zajtra";
 
 	uint8_t dlzka_payload = strlen(message) + 1;
 	dlzka_payload += 3;
 	uint8_t dlzka_spravy = strlen(message) + 1 + 7;
-
 	uint8_t default_param[] = {0x00, dlzka_spravy, 0xd1, 0x1, dlzka_payload, 0x54, 0x2, 0x65, 0x6e};
-
 	int32_t celkova_dlzka = sizeof(default_param) + strlen(message) + 1;
 	uint8_t ndef_message[celkova_dlzka];
 
@@ -225,18 +249,49 @@ void Write_Joke_To_NFC(char message[]){
 
 	//Write_Joke_Message(&sprava, &ndef_data);
 
-	uint16_t success8 = M24SR_UpdateBinary (M24SR_I2C_ADDR_WRITE, 0x00 , sizeof(ndef_message), ndef_message); //Zapisanie spravy
-	uint16_t success10 = M24SR_Verify(M24SR_I2C_ADDR_WRITE, READ ,0x10 ,DefaultPassword ); //odomknutie NDEF file na reade
-	uint16_t success11 =  M24SR_SelectNDEFfile (M24SR_I2C_ADDR_WRITE, NDEF_FILE_ID); //vybratie NDEF súboru
-	uint16_t success12 =  M24SR_ReadBinary (M24SR_I2C_ADDR_WRITE, 0x00 ,0x02 , buffer); //prečítanie dĺžky NDEF súboru
+//Zapisanie spravy
+	  if ((error = M24SR_UpdateBinary (M24SR_I2C_ADDR_WRITE, 0x00 , sizeof(ndef_message), ndef_message)) != M24SR_ACTION_COMPLETED)
+	  {
+	    return error;
+	  }
+//odomknutie NDEF file na reade
+	  if ((error = M24SR_Verify(M24SR_I2C_ADDR_WRITE, READ ,0x10 ,DefaultPassword )) != M24SR_ACTION_COMPLETED)
+	  {
+	    return error;
+	  }
+//vybratie NDEF súboru
+	  if ((error = M24SR_SelectNDEFfile (M24SR_I2C_ADDR_WRITE, NDEF_FILE_ID)) != M24SR_ACTION_COMPLETED)
+	  {
+	    return error;
+	  }
+//prečítanie dĺžky NDEF súboru
+	  if ((error = M24SR_ReadBinary (M24SR_I2C_ADDR_WRITE, 0x00 ,0x02 , buffer)) != M24SR_ACTION_COMPLETED)
+	  {
+	    return error;
+	  }
 
 	uint8_t dlzka = buffer[1];	// dlzka spravy
+
+	//kontrola či sa nahrala spravna dĺžka správy
+	if (dlzka_spravy != dlzka)
+	{
+		return ERROR_BAD_LENGTH;
+	}
+
 	dlzka += 2;					// celkova dlzka buffera
 
-	   //NbByteToRead musi byt celkova dlzka
-	uint16_t success13 =  M24SR_ReadBinary (M24SR_I2C_ADDR_WRITE, 0x00 ,dlzka , buffer); //prečítanie NDEF súboru
-	uint8_t successEnd = M24SR_Deselect (M24SR_I2C_ADDR_WRITE);
+	//NbByteToRead musi byt celkova dlzka
+	//prečítanie NDEF súboru
+	  if ((error = M24SR_ReadBinary (M24SR_I2C_ADDR_WRITE, 0x00 ,dlzka , buffer)) != M24SR_ACTION_COMPLETED)
+	  {
+	    return error;
+	  }
 
+	  if ((error = M24SR_Deselect (M24SR_I2C_ADDR_WRITE)) != M24SR_ACTION_COMPLETED)
+	  {
+	    return error;
+	  }
+	  return M24SR_ACTION_COMPLETED;
 }
 
 void Write_Joke_Message(char *jokeBuffer, uint8_t *NDEFmessage){
