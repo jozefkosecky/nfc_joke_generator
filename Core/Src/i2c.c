@@ -157,7 +157,7 @@ uint16_t   NFC_IO_IsDeviceReady (uint8_t Addr, uint32_t Trials)
     return NFC_I2C_STATUS_SUCCESS;
 }
 
-uint16_t NFC_IO_WriteMultiple (uint8_t Addr, uint8_t *pBuffer, uint16_t Length)
+uint16_t NFC_IO_WriteMultiple (uint8_t Addr, uint8_t *pBuffer, uint8_t Length)
 {
   uint16_t status ;
   /* Before calling this function M24SR must be ready: check to detect potential issues */
@@ -175,11 +175,9 @@ uint16_t NFC_IO_WriteMultiple (uint8_t Addr, uint8_t *pBuffer, uint16_t Length)
   return NFC_I2C_STATUS_SUCCESS;
 }
 
-uint16_t NFC_IO_ReadMultiple (uint8_t Addr, uint8_t *pBuffer, uint16_t Length )
+uint16_t NFC_IO_ReadMultiple (uint8_t Addr, uint8_t *pBuffer, uint8_t Length )
 {
   uint16_t status ;
-  uint8_t testBuffer[0xFF];
-  memset(testBuffer, 0, sizeof testBuffer);
     /* Before calling this function M24SR must be ready: check to detect potential issues */
   status = NFC_IO_IsDeviceReady(Addr, NFC_I2C_TRIALS);
   if (status != NFC_I2C_STATUS_SUCCESS)

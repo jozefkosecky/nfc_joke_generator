@@ -220,7 +220,7 @@ typedef enum{
   */
 
 static C_APDU               Command;
-static uint8_t              DataBuffer[0xFF];
+//static uint8_t              DataBuffer[0xFF];
 uint8_t                     uM24SRbuffer [0xFF];
 static uint8_t              uDIDbyte =0x00;
 

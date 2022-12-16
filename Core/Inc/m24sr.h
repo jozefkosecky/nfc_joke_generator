@@ -127,8 +127,8 @@ void     M24SR_GPO_Callback                   (void );
 /* IO functions */
 extern void     NFC_IO_Init(uint8_t GpoIrqEnable);
 extern void     NFC_IO_DeInit(void);
-extern uint16_t NFC_IO_ReadMultiple (uint8_t Addr, uint8_t *pBuffer, uint16_t Length );
-extern uint16_t NFC_IO_WriteMultiple (uint8_t Addr, uint8_t *pBuffer, uint16_t Length);
+extern uint16_t NFC_IO_ReadMultiple (uint8_t Addr, uint8_t *pBuffer, uint8_t Length );
+extern uint16_t NFC_IO_WriteMultiple (uint8_t Addr, uint8_t *pBuffer, uint8_t Length);
 extern uint16_t NFC_IO_IsDeviceReady (uint8_t Addr, uint32_t Trials);
 void     NFC_IO_ReadState(uint8_t * pPinState);
 extern void     NFC_IO_RfDisable(uint8_t PinState);
