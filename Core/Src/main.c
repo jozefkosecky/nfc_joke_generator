@@ -164,11 +164,16 @@ void shuffle(char array[][1024], int rows){
 }
 
 void createJokes(char array[][1024]) {
-	strcpy(array[0], "Ahojte\0");
+	strcpy(array[0], "Prijdu dvaja kamarati pred zaverecnou do restaurscie, ze chcu veceru. Casnik im odpovie, ze uz maju len trocha ryze a dva rezne, ale jeden je taky maly. Oni povedia: - To nevadi, my sa podelime. Ryzu si rozdelia na polovicku a jeden si zoberie ten vscsi rezen a druhz hovori: - Ty si pekny kamarat, zobral si si ten vacsi. - No a keby si si ty bral tak ktory si zoberies? - No ja by som si zobral ten mensi. - A co si hubu otvaras ved ho tam mas.\0");
 	strcpy(array[1], "Putin is held hostage by a terrorist. A Russian truckdriver stops at the back of a long queue on the motorway. He sees a policeman walking down the line of stopped cars to briefly talk to the drivers. As the policeman approaches the truck, the truckdriver rolls down his window and asks, What's going on? Policeman: A terrorist is holding Putin hostage in a car. He's demanding 10 million rubles, or he'll douse Putin in petrol and set him on fire. So we're asking drivers for donations.Driver: Oh, ok. How much do people donate on average. Policeman: About a gallon.\0");
-	strcpy(array[2], "funguje\0");
-	strcpy(array[3], "aj so zamiesanim!\0");
-	strcpy(array[4], "Putin is held hostage by a terrorist. A Russian truckdriver stops at the back of a long queue on the motorway. He sees a policeman walking down the line of stopped cars to briefly talk to the drivers. As the policeman approaches the truck, the truckdriver rolls down his window and asks, What's going on? Policeman: A terrorist is holding Putin hostage in a car. He's demanding 10 million rubles, or he'll douse Putin in petrol and set him on fire. So we're asking drivers for donations.Driver: Oh, ok. How much do people donate on average. Policeman: About a gallon.\0");
+	strcpy(array[2], "- Povedzte, James, kto je tu blbec, vy ci ja? - Pan grof... vy nie ste clovek, ktory by zamestnaval blbca\0");
+	strcpy(array[3], "Zakaznik v predajni pocitacov: - Hladam napinavu dobrodruznu hru na PC, ktora pre mna bude predstavovat ozajstnu vyzvu. Predavac: - Tak to predsa skuste Windows - budete nadseny.\0");
+	strcpy(array[4], "Viete, aky je rozdiel medzi hardwarom a softwarom? Hardware sa da tazsie skopirovat.\0");
+	strcpy(array[5], "-Tatko, potreboval by som novy hardisk. - A kuzelne slovicko? - Do riti! Vsetko je dnes zaheslovane!\0");
+	strcpy(array[6], "Tehotna zena sa bije s kamaratom. Tak som sa pridal ku kamaratovi, aby to bolo dvaja na dvoch.\0");
+	strcpy(array[7], "Vies ako sa volal cinan, ktory vynasiel slipy? Fuciminavajo.\0");
+	strcpy(array[8], "Vies aky je rozdiel medzi cernochom a pneumatikou? Ak na pneumatiku nasadis retaz tak nerepuje.\0");
+	strcpy(array[9], "Viete preco maju zeny o jeden mozgovy zavit viac ako kone? Aby nepili vodu z vedra, ked umyvaju dlazku.\0");
 
 }
 
