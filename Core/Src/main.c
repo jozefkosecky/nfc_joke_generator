@@ -175,7 +175,7 @@ void createJokes(char array[][1024]) {
 	strcpy(array[8], "Vies aky je rozdiel medzi cernochom a pneumatikou? Ak na pneumatiku nasadis retaz tak nerepuje.\0");
 	strcpy(array[9], "Viete preco maju zeny o jeden mozgovy zavit viac ako kone? Aby nepili vodu z vedra, ked umyvaju dlazku.\0");
 	strcpy(array[10], "Arab prezleceny za tehotnu zenu nastupuje do lietadla a letuska sa ho pyta: „Co to bude, chlapcek alebo dievcatko?“ Arab: „Dvojicky.“\0");
-	strcpy(array[11], "Pride homosexual do masiarstva: - Prosim si kilo salamy. - Nakrajat? - Debil, ty si myslis, že mam v zadku jukebox.\0");
+	strcpy(array[11], "Pride homosexual do masiarstva: - Prosim si kilo salamy. - Nakrajat? - Debil, ty si myslis, ze mam v zadku jukebox.\0");
 	strcpy(array[12], "Life is too short to remove USB safely.\0");
 	strcpy(array[13], "Manzelska hadka: ”Pamatas sa, ako si mi hovoril, ze ma budes nosit na rukach?” ”A pamatas sa, aka si bola stihla?”\0");
 	strcpy(array[14], "Vojde turista v San Francisku do obchodu so zvieratami a obzera si opice. V tom vojde iny chlap, ide rovno k predavacovi a pyta si: – Prosim si jednu opicu typu C++. Predavac mu ju poda, chlap zaplati 5000 dolarov a odide. Prekvapeny turista sa pyta: – Prosim vas, co to bolo za opicu, ze bola taka draha? – No, viete, ona dokaze programovat v C++, bez chyb, efektivne, uhladny kod. Velmi dobra investicia. – A tamtie opice? – Tie stoja 10 000 dolarov, ale vedia robit v C++, v Jave i v XML. – Preboha, a tam mate opicu za 50 000! Co dokaze ta?” – No, pravdupovediac, este som ju nevidel nic robit, ale ostatne opice ju oslovuju “project manager”.\0");
