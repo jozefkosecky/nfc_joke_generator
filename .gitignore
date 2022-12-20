@@ -30,6 +30,7 @@ Debug/
 *.map
 *.m
 *.png
+*.pptx
 
 # Eclipse CDT project files
 .cproject
