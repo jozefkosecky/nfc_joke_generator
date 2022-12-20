@@ -138,7 +138,6 @@ int main(void)
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
 
-	// Free memory when done
   while (1)
   {
     /* USER CODE END WHILE */
@@ -147,7 +146,7 @@ int main(void)
 		  newJoke = 1; // nastavime na 1, po skonceni komunikacie mozme zacat nahravat novy vtip
 	  }
 	  if(LL_GPIO_IsInputPinSet(NFC_GPO_GPIO_Port, NFC_GPO_Pin) && newJoke){ // kontrola ci skoncila RF komunikacia
-		  LL_mDelay(250);
+
 
 		  i++; // po kazdom vtipe sa posuvame v liste
 		  if(i == rows){ // kontrola ci sme dosli na koniec listu
@@ -157,7 +156,7 @@ int main(void)
 
 		  char message[maxSize];
 		  strcpy(message, jokes[i]);
-
+		  LL_mDelay(500);
 		  Write_Joke_To_NFC(message);
 		  newJoke = 0;
 
@@ -249,7 +248,7 @@ void Write_Joke_To_NFC(char message[]){
 
 		// odosielame NDEF spravu a kontrolujeme ci nenastali chyby ak ano zopakujeme odosielanie
 		if(Write_Joke_Message(ndef_message, celkova_dlzka, 0x00) !=M24SR_ACTION_COMPLETED){
-			LL_mDelay(100);
+			LL_mDelay(25);
 			Write_Joke_Message(ndef_message, max_send, 0x00);
 		}
 
@@ -264,7 +263,7 @@ void Write_Joke_To_NFC(char message[]){
 
 		//odosleme defaul_parametre s castou spravy + kontrola
 		if(Write_Joke_Message(ndef_message, max_send, 0x00) !=M24SR_ACTION_COMPLETED){
-			LL_mDelay(100);
+			LL_mDelay(25);
 			Write_Joke_Message(ndef_message, max_send, 0x00);
 		}
 
@@ -274,6 +273,7 @@ void Write_Joke_To_NFC(char message[]){
 		update_offset = max_send;
 
 		while(celkova_dlzka > 0){ //odosielame zvysok spravy/payloadu bez parametrov kedze tie chceme iba raz na zaciatku NDEF spravy
+			LL_mDelay(20);
 			memset(ndef_message,0,max_send);
 			memcpy(ndef_message, message+mess_offset, max_send);
 
@@ -293,7 +293,7 @@ void Write_Joke_To_NFC(char message[]){
 uint16_t Write_Joke_Message(uint8_t *NDEFmessage, uint16_t dlzka, uint16_t offset){
 
 //Zacatie I2C komunikacie
-	  if ((error = M24SR_GetSession (M24SR_I2C_ADDR_WRITE)) != M24SR_ACTION_COMPLETED)
+	  if ((error = M24SR_KillSession (M24SR_I2C_ADDR_WRITE)) != M24SR_ACTION_COMPLETED)
 	  {
 	    return error;
 	  }
