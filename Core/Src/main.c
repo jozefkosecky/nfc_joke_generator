@@ -131,6 +131,7 @@ int main(void)
   int i = 0;
 
   M24SR_ManageRFGPO(M24SR_I2C_ADDR_WRITE, SESSION_OPENED); //nastavenie GPO na session_open
+  disableReadProtection();
   strcpy(message, jokes[i]); // skopirovanie vtipu do bufferu
   Write_Joke_To_NFC(message); // prvotne nahratie vtipu no NDEF suboru NFC
   /* USER CODE END 2 */
@@ -156,7 +157,6 @@ int main(void)
 
 		  char message[maxSize];
 		  strcpy(message, jokes[i]);
-		  LL_mDelay(500);
 		  Write_Joke_To_NFC(message);
 		  newJoke = 0;
 
@@ -300,12 +300,6 @@ uint16_t Write_Joke_Message(uint8_t *NDEFmessage, uint16_t dlzka, uint16_t offse
 
 //Odoslanie príkazu SelectNDEFTagApplication
 	  if ((error = M24SR_SelectApplication (M24SR_I2C_ADDR_WRITE)) != M24SR_ACTION_COMPLETED)
-	  {
-	    return error;
-	  }
-
-//Vybratie CC súboru
-	  if ((error = M24SR_SelectCCfile (M24SR_I2C_ADDR_WRITE)) != M24SR_ACTION_COMPLETED)
 	  {
 	    return error;
 	  }
